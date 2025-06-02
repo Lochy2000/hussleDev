@@ -2,15 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { useProfile } from '../hooks/useProfile';
-import { Camera, Save, Loader, X } from 'lucide-react';
+import { Save, Loader } from 'lucide-react';
+import ImageUpload from '../components/ui/ImageUpload';
 import toast from 'react-hot-toast';
 
 const ProfilePage = () => {
   const { currentUser } = useAuth();
-  const { getProfile, updateProfile, uploadAvatar } = useProfile();
+  const { getProfile, updateProfile } = useProfile();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [profile, setProfile] = useState({
     username: '',
     full_name: '',
@@ -33,6 +33,7 @@ const ProfilePage = () => {
         }
       } catch (error) {
         console.error('Error loading profile:', error);
+        toast.error('Failed to load profile');
       } finally {
         setLoading(false);
       }
@@ -41,21 +42,6 @@ const ProfilePage = () => {
     loadProfile();
   }, [currentUser, getProfile]);
 
-  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    try {
-      const file = event.target.files?.[0];
-      if (!file || !currentUser) return;
-
-      setUploadingAvatar(true);
-      const publicUrl = await uploadAvatar(currentUser.id, file);
-      setProfile(prev => ({ ...prev, avatar_url: publicUrl }));
-    } catch (error) {
-      console.error('Error uploading avatar:', error);
-    } finally {
-      setUploadingAvatar(false);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentUser) return;
@@ -63,9 +49,17 @@ const ProfilePage = () => {
     try {
       setSaving(true);
       await updateProfile(currentUser.id, profile);
+      toast.success('Profile updated successfully');
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      toast.error('Failed to update profile');
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleImageUpload = (url: string) => {
+    setProfile(prev => ({ ...prev, avatar_url: url }));
   };
 
   const handleSkillsChange = (value: string) => {
@@ -101,37 +95,11 @@ const ProfilePage = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Avatar Section */}
             <div className="flex items-center space-x-6">
-              <div className="relative">
-                <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-dark-600">
-                  <img
-                    src={profile.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser?.id}`}
-                    alt="Profile"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <label
-                  htmlFor="avatar-upload"
-                  className={`absolute bottom-0 right-0 p-2 rounded-full cursor-pointer transition-colors ${
-                    uploadingAvatar 
-                      ? 'bg-dark-600' 
-                      : 'bg-hustle-500 hover:bg-hustle-400'
-                  }`}
-                >
-                  {uploadingAvatar ? (
-                    <Loader size={16} className="text-white animate-spin" />
-                  ) : (
-                    <Camera size={16} className="text-white" />
-                  )}
-                </label>
-                <input
-                  id="avatar-upload"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleAvatarUpload}
-                  className="hidden"
-                  disabled={uploadingAvatar}
-                />
-              </div>
+              <ImageUpload
+                currentImageUrl={profile.avatar_url}
+                onUpload={handleImageUpload}
+                folder="avatars"
+              />
               <div>
                 <h2 className="text-lg font-medium">{profile.full_name || 'Your Name'}</h2>
                 <p className="text-dark-300">@{profile.username || 'username'}</p>
