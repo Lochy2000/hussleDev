@@ -87,7 +87,7 @@ const Navbar = () => {
                 className="flex items-center space-x-2"
               >
                 <img
-                  src={currentUser?.photoURL}
+                  src={currentUser?.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser?.id}`}
                   alt={currentUser?.name}
                   className="w-8 h-8 rounded-full border-2 border-hustle-500"
                 />
@@ -112,7 +112,7 @@ const Navbar = () => {
                       </p>
                     </div>
                     <Link
-                      to="/dashboard"
+                      to="/profile"
                       className="block px-4 py-2 text-sm text-dark-200 hover:bg-dark-700 hover:text-white flex items-center"
                       onClick={() => setUserMenuOpen(false)}
                     >
@@ -197,7 +197,7 @@ const Navbar = () => {
                 <>
                   <div className="pt-2 border-t border-dark-700 flex items-center">
                     <img
-                      src={currentUser?.photoURL}
+                      src={currentUser?.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser?.id}`}
                       alt={currentUser?.name}
                       className="w-8 h-8 rounded-full mr-2 border-2 border-hustle-500"
                     />
@@ -208,6 +208,13 @@ const Navbar = () => {
                       <p className="text-xs text-dark-400">{currentUser?.email}</p>
                     </div>
                   </div>
+                  <Link
+                    to="/profile"
+                    className="py-2 text-base font-medium text-dark-300 hover:text-white flex items-center"
+                  >
+                    <User size={16} className="mr-2" />
+                    Profile
+                  </Link>
                   <button
                     onClick={handleLogout}
                     className="py-2 text-base font-medium text-dark-300 hover:text-white flex items-center"
