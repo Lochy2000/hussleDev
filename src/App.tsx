@@ -10,6 +10,7 @@ import ExplorePage from './pages/ExplorePage';
 import DashboardPage from './pages/DashboardPage';
 import BotPage from './pages/BotPage';
 import TemplatesPage from './pages/TemplatesPage';
+import ProfilePage from './pages/ProfilePage';
 import NotFoundPage from './pages/NotFoundPage';
 
 // Components
@@ -51,6 +52,7 @@ function App() {
             
             <Route element={<ProtectedRoute />}>
               <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/profile" element={<ProfilePage />} />
               <Route path="/bot" element={<BotPage />} />
               <Route path="/templates" element={<TemplatesPage />} />
             </Route>
@@ -63,4 +65,4 @@ function App() {
   );
 }
 
-export default App;
+export default App
