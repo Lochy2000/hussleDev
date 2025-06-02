@@ -29,6 +29,8 @@ npm run test -- --coverage
   - Signup
   - Password Reset
   - OAuth
+  - Rate Limiting
+  - Request Validation
 
 - CRUD Operations
   - Hustles
@@ -46,6 +48,8 @@ npm run test -- --coverage
 - Supabase Client
 - Real-time Subscriptions
 - File Upload
+- Rate Limiting
+- Request Validation
 
 #### Feature Tests
 - Search Functionality
@@ -54,68 +58,73 @@ npm run test -- --coverage
 
 ## Example Tests
 
-### API Test Example
+### Rate Limiting Tests
 ```typescript
 import { describe, it, expect } from 'vitest';
-import { supabase } from '../lib/supabase';
+import request from 'supertest';
+import app from '../src/server';
 
-describe('Hustle API', () => {
-  it('should fetch hustles with pagination', async () => {
-    const { data, error, count } = await supabase
-      .from('hustles')
-      .select('*', { count: 'exact' })
-      .range(0, 9);
-
-    expect(error).toBeNull();
-    expect(data).toBeDefined();
-    expect(count).toBeDefined();
-    expect(data?.length).toBeLessThanOrEqual(10);
+describe('Rate Limiting', () => {
+  it('should limit API requests', async () => {
+    // Make multiple requests
+    for (let i = 0; i < 101; i++) {
+      const response = await request(app).get('/api/hustles');
+      
+      if (i < 100) {
+        expect(response.status).not.toBe(429);
+      } else {
+        expect(response.status).toBe(429);
+        expect(response.body.message).toContain('Too many requests');
+      }
+    }
   });
 
-  it('should search hustles by title', async () => {
-    const searchTerm = 'test';
-    const { data, error } = await supabase
-      .from('hustles')
-      .select('*')
-      .ilike('title', `%${searchTerm}%`);
-
-    expect(error).toBeNull();
-    expect(data).toBeDefined();
-    data?.forEach(hustle => {
-      expect(hustle.title.toLowerCase()).toContain(searchTerm);
-    });
+  it('should limit auth requests more strictly', async () => {
+    // Make multiple auth requests
+    for (let i = 0; i < 6; i++) {
+      const response = await request(app).post('/api/auth/login');
+      
+      if (i < 5) {
+        expect(response.status).not.toBe(429);
+      } else {
+        expect(response.status).toBe(429);
+        expect(response.body.message).toContain('Too many authentication attempts');
+      }
+    }
   });
 });
 ```
 
-### Component Test Example
+### Request Validation Tests
 ```typescript
 import { describe, it, expect } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
-import SearchBar from '../components/SearchBar';
+import request from 'supertest';
+import app from '../src/server';
 
-describe('SearchBar', () => {
-  it('should call onSearch when input changes', async () => {
-    const onSearch = vi.fn();
-    render(<SearchBar onSearch={onSearch} />);
+describe('Request Validation', () => {
+  it('should validate login request', async () => {
+    const response = await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'invalid-email', password: '123' });
 
-    const input = screen.getByPlaceholderText('Search hustles...');
-    fireEvent.change(input, { target: { value: 'test' } });
-
-    expect(onSearch).toHaveBeenCalledWith('test');
+    expect(response.status).toBe(400);
+    expect(response.body.errors).toContainEqual({
+      field: 'email',
+      message: 'Invalid email address',
+    });
   });
 
-  it('should debounce search input', async () => {
-    vi.useFakeTimers();
-    const onSearch = vi.fn();
-    render(<SearchBar onSearch={onSearch} />);
+  it('should validate hustle creation', async () => {
+    const response = await request(app)
+      .post('/api/hustles')
+      .send({
+        title: '',
+        description: '',
+        status: 'invalid',
+      });
 
-    const input = screen.getByPlaceholderText('Search hustles...');
-    fireEvent.change(input, { target: { value: 'test' } });
-
-    expect(onSearch).not.toHaveBeenCalled();
-    vi.advanceTimersByTime(300);
-    expect(onSearch).toHaveBeenCalledWith('test');
+    expect(response.status).toBe(400);
+    expect(response.body.errors).toHaveLength(3);
   });
 });
 ```
@@ -127,6 +136,8 @@ describe('SearchBar', () => {
   - Authentication
   - Data mutations
   - Form validation
+  - Rate limiting
+  - Request validation
 
 ## Running Tests in CI/CD
 
