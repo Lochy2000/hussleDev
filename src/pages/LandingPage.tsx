@@ -55,37 +55,42 @@ const LandingPage = () => {
             </motion.div>
 
             {/* Logo Animation - Takes up 2 columns */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6 }}
-              className="md:col-span-2 relative max-w-[300px] mx-auto md:mt-0 mt-12"
-            >
-              <motion.div
-                className="absolute inset-0"
-                initial={{ opacity: 1 }}
-                animate={{ opacity: [1, 0, 1] }}
-                transition={{ duration: 8, repeat: Infinity }}
-              >
-                <img 
-                  src="/3.png" 
-                  alt="Hustle Cat Happy"
-                  className="w-full h-auto"
-                />
-              </motion.div>
-              <motion.div
-                className="absolute inset-0"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: [0, 1, 0] }}
-                transition={{ duration: 8, repeat: Infinity }}
-              >
-                <img 
-                  src="/4.png" 
-                  alt="Hustle Cat Focused"
-                  className="w-full h-auto"
-                />
-              </motion.div>
-            </motion.div>
+            <div className="md:col-span-2 relative flex items-center justify-center">
+              <div className="relative w-[300px] h-[300px]">
+                <motion.div
+                  className="absolute inset-0 z-10"
+                  initial={{ opacity: 1 }}
+                  animate={{ opacity: [1, 0, 1] }}
+                  transition={{ 
+                    duration: 8, 
+                    repeat: Infinity, 
+                    ease: "easeInOut" 
+                  }}
+                >
+                  <img 
+                    src="/3.png" 
+                    alt="Hustle Cat Happy"
+                    className="w-full h-full object-contain"
+                  />
+                </motion.div>
+                <motion.div
+                  className="absolute inset-0 z-0"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: [0, 1, 0] }}
+                  transition={{ 
+                    duration: 8, 
+                    repeat: Infinity, 
+                    ease: "easeInOut" 
+                  }}
+                >
+                  <img 
+                    src="/4.png" 
+                    alt="Hustle Cat Focused"
+                    className="w-full h-full object-contain"
+                  />
+                </motion.div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
