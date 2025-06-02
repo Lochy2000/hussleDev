@@ -3,31 +3,38 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { ArrowLeft, Github, Mail } from 'lucide-react';
+import { loginSchema, type LoginInput } from '../lib/schemas';
+import toast from 'react-hot-toast';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
   const { login, loginWithGithub } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
     setIsLoading(true);
 
     try {
-      await login(email, password);
+      // Validate form data
+      const formData: LoginInput = { email, password };
+      const validatedData = loginSchema.parse(formData);
+
+      await login(validatedData.email, validatedData.password);
+      toast.success('Successfully logged in!');
       navigate('/dashboard');
     } catch (err: any) {
-      // Handle specific error cases
-      if (err.message?.includes('email_not_confirmed')) {
-        setError('Please check your email inbox and click the verification link to confirm your account before logging in.');
+      if (err.formErrors) {
+        // Zod validation error
+        toast.error(err.formErrors.fieldErrors[Object.keys(err.formErrors.fieldErrors)[0]][0]);
+      } else if (err.message?.includes('email_not_confirmed')) {
+        toast.error('Please check your email inbox and verify your account before logging in.');
       } else if (err.message?.includes('invalid_credentials')) {
-        setError('Invalid email or password. Please check your credentials and try again.');
+        toast.error('Invalid email or password. Please check your credentials.');
       } else {
-        setError('An error occurred while trying to log in. Please try again.');
+        toast.error('Failed to log in. Please try again.');
       }
       console.error(err);
     } finally {
@@ -36,18 +43,14 @@ const LoginPage = () => {
   };
 
   const handleGithubLogin = async () => {
-    setError('');
     setIsLoading(true);
 
     try {
       await loginWithGithub();
+      toast.success('Successfully logged in with GitHub!');
       navigate('/dashboard');
     } catch (err: any) {
-      if (err.message?.includes('email_not_confirmed')) {
-        setError('Please check your email inbox and click the verification link to confirm your account before logging in.');
-      } else {
-        setError('Failed to log in with GitHub. Please try again.');
-      }
+      toast.error('Failed to log in with GitHub. Please try again.');
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -73,12 +76,6 @@ const LoginPage = () => {
         </div>
 
         <div className="bg-dark-800 rounded-lg p-8 border border-dark-700 shadow-xl">
-          {error && (
-            <div className="mb-6 p-3 bg-red-900/20 border border-red-800 rounded-md text-red-200 text-sm">
-              {error}
-            </div>
-          )}
-
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-dark-200 mb-1">
@@ -122,8 +119,8 @@ const LoginPage = () => {
             >
               {isLoading ? (
                 <span className="flex items-center">
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white\" xmlns="http://www.w3.org/2000/svg\" fill="none\" viewBox="0 0 24 24">
-                    <circle className="opacity-25\" cx="12\" cy="12\" r="10\" stroke="currentColor\" strokeWidth="4"></circle>
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
                   Signing in...
