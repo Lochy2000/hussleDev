@@ -135,3 +135,51 @@ const channel = supabase
   .on('UPDATE', handleHustleUpdate)
   .subscribe();
 ```
+
+## Image Optimization
+
+### Features
+- Automatic image optimization
+- WebP conversion
+- Dimension constraints
+- Quality compression
+- Secure upload validation
+- CDN delivery
+
+### Implementation
+- Client-side optimization
+- Server-side validation
+- Supabase Storage integration
+- Automatic WebP conversion
+- Responsive image sizes
+
+### Usage Example
+```typescript
+// Upload and optimize an image
+const imageUrl = await uploadImage(file, 'hustles', 'my-image.webp');
+
+// Validate an image
+const validation = await validateImage(file);
+if (!validation.valid) {
+  console.error(validation.error);
+}
+
+// Delete an image
+await deleteImage('hustles/my-image.webp');
+```
+
+### Image Sizes
+- Thumbnail: 200x200
+- Medium: 600x600
+- Large: 1200x1200
+
+### Supported Formats
+- JPEG
+- PNG
+- WebP
+
+### Security
+- File type validation
+- Size limits (5MB max)
+- Secure URL generation
+- Access control
