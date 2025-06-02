@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-dark-900 text-dark-100 font-sans overflow-x-hidden;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-mono;
+  }
+}
+
+@layer components {
+  .neon-glow {
+    @apply relative;
+  }
+  
+  .neon-glow::after {
+    @apply content-[''] absolute inset-0 rounded-md opacity-30 blur-md -z-10;
+  }
+
+  .neon-purple::after {
+    @apply bg-neon-purple;
+  }
+  
+  .neon-blue::after {
+    @apply bg-neon-blue;
+  }
+  
+  .neon-cyan::after {
+    @apply bg-neon-cyan;
+  }
+
+  .noise-bg {
+    @apply before:content-[''] before:fixed before:inset-0 before:bg-grain before:opacity-20 before:bg-repeat before:w-full before:h-full before:pointer-events-none before:z-10;
+  }
+
+  .btn {
+    @apply px-4 py-2 rounded-md font-medium transition-all duration-300 inline-flex items-center justify-center;
+  }
+
+  .btn-primary {
+    @apply bg-hustle-500 hover:bg-hustle-400 text-white;
+  }
+
+  .btn-secondary {
+    @apply bg-dark-700 hover:bg-dark-600 text-white;
+  }
+
+  .btn-outline {
+    @apply border border-hustle-400 text-hustle-300 hover:bg-hustle-800 hover:text-hustle-200;
+  }
+
+  .card {
+    @apply bg-dark-800 rounded-lg overflow-hidden border border-dark-700;
+  }
+
+  .gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-neon-purple via-neon-blue to-neon-cyan;
+  }
+
+  .floating-particles {
+    @apply absolute inset-0 overflow-hidden pointer-events-none;
+  }
+}
