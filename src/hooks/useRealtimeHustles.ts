@@ -19,8 +19,8 @@ export function useRealtimeHustles(userId: string) {
     const fetchHustles = async () => {
       try {
         setLoading(true);
-        const data = await getHustles(userId);
-        setHustles(data);
+        const { data } = await getHustles(userId);
+        setHustles(data || []);
         setError(null);
       } catch (err) {
         setError(err instanceof Error ? err : new Error('Failed to fetch hustles'));

@@ -9,7 +9,7 @@ import toast from 'react-hot-toast';
 
 const DashboardPage = () => {
   const { currentUser } = useAuth();
-  const { hustles, loading } = useRealtimeHustles(currentUser?.id || '');
+  const { hustles = [], loading } = useRealtimeHustles(currentUser?.id || '');
   const { updateHustle, deleteHustle } = useSupabase();
   const [editingNotes, setEditingNotes] = useState<string | null>(null);
   const [noteText, setNoteText] = useState('');
@@ -52,9 +52,9 @@ const DashboardPage = () => {
     );
   }
 
-  const savedHustles = hustles.filter(h => h.status === 'saved');
-  const inProgressHustles = hustles.filter(h => h.status === 'in-progress');
-  const launchedHustles = hustles.filter(h => h.status === 'launched');
+  const savedHustles = Array.isArray(hustles) ? hustles.filter(h => h.status === 'saved') : [];
+  const inProgressHustles = Array.isArray(hustles) ? hustles.filter(h => h.status === 'in-progress') : [];
+  const launchedHustles = Array.isArray(hustles) ? hustles.filter(h => h.status === 'launched') : [];
 
   return (
     <div className="container mx-auto pb-12">
@@ -63,7 +63,7 @@ const DashboardPage = () => {
         <p className="text-dark-300">Manage and track your side hustle projects</p>
       </div>
 
-      {hustles.length === 0 ? (
+      {(!Array.isArray(hustles) || hustles.length === 0) ? (
         <div className="text-center py-16 bg-dark-800 rounded-lg border border-dark-700">
           <div className="bg-dark-700 inline-flex rounded-full p-4 mb-4">
             <Compass size={32} className="text-hustle-400" />
