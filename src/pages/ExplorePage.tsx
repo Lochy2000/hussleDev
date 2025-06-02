@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Filter, Search, X, Bookmark, BookmarkCheck, Clock, DollarSign, Code } from 'lucide-react';
+import { Filter, Search, X, Bookmark, BookmarkCheck, Clock, DollarSign, Code, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useHustleManagement } from '../hooks/useHustleManagement';
+import { useExploreHustles } from '../hooks/useExploreHustles';
 import HustleModal from '../components/ui/HustleModal';
+import LoadingSkeleton from '../components/ui/LoadingSkeleton';
 import { Database } from '../lib/database.types';
 import toast from 'react-hot-toast';
 
@@ -12,7 +14,7 @@ type Hustle = Database['public']['Tables']['hustles']['Row'];
 const ExplorePage = () => {
   const { currentUser } = useAuth();
   const { createHustle } = useHustleManagement();
-  const [hustles, setHustles] = useState<Hustle[]>([]);
+  const { hustles, loading, error } = useExploreHustles();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [timeFilter, setTimeFilter] = useState<string>('');
@@ -21,12 +23,6 @@ const ExplorePage = () => {
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
   const [selectedHustle, setSelectedHustle] = useState<Hustle | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  // Load hustles from API
-  useEffect(() => {
-    // For now, we'll use the mock data
-    setHustles(hustleData);
-  }, []);
 
   // Load saved hustles for the current user
   useEffect(() => {
@@ -38,6 +34,40 @@ const ExplorePage = () => {
       }
     }
   }, [currentUser]);
+
+  if (loading) {
+    return (
+      <div className="container mx-auto pb-12">
+        <div className="mb-8">
+          <h1 className="text-3xl font-mono font-bold mb-2">Explore Side Hustles</h1>
+          <p className="text-dark-300">Discover developer side hustle ideas and start building today</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <LoadingSkeleton type="card" count={6} />
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto pb-12">
+        <div className="text-center py-12">
+          <div className="bg-red-900/20 inline-flex rounded-full p-3 mb-4">
+            <AlertTriangle size={24} className="text-red-500" />
+          </div>
+          <h3 className="text-xl font-mono font-medium mb-2">Failed to load hustles</h3>
+          <p className="text-dark-300 mb-6">
+            {error.message || 'An error occurred while loading the hustles. Please try again.'}
+          </p>
+          <button onClick={() => window.location.reload()} className="btn btn-secondary">
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const handleSaveHustle = async (hustle: Hustle) => {
     if (!currentUser) {
