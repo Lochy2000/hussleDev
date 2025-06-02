@@ -64,6 +64,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/dashboard`,
+        },
       });
       if (error) throw error;
     } catch (err) {
@@ -77,6 +80,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setError(null);
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`,
+        },
       });
       if (error) throw error;
     } catch (err) {
