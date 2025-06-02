@@ -24,6 +24,19 @@ export interface Database {
           earning_potential: 'low' | 'medium' | 'high'
           image: string
           tools: string[]
+          version: number
+          collaborators: string[] | null
+          progress: number | null
+          revenue_target: number | null
+          current_revenue: number | null
+          category: string | null
+          launch_date: string | null
+          last_milestone: string | null
+          priority: 'low' | 'medium' | 'high' | null
+          due_date: string | null
+          milestones: Json | null
+          github_url: string | null
+          website_url: string | null
         }
         Insert: {
           id?: string
@@ -32,13 +45,26 @@ export interface Database {
           title: string
           description: string
           tags: string[]
-          status: 'saved' | 'in-progress' | 'launched'
+          status?: 'saved' | 'in-progress' | 'launched'
           user_id: string
           notes?: string | null
           time_commitment: 'low' | 'medium' | 'high'
           earning_potential: 'low' | 'medium' | 'high'
           image: string
           tools: string[]
+          version?: number
+          collaborators?: string[] | null
+          progress?: number | null
+          revenue_target?: number | null
+          current_revenue?: number | null
+          category?: string | null
+          launch_date?: string | null
+          last_milestone?: string | null
+          priority?: 'low' | 'medium' | 'high' | null
+          due_date?: string | null
+          milestones?: Json | null
+          github_url?: string | null
+          website_url?: string | null
         }
         Update: {
           id?: string
@@ -54,6 +80,19 @@ export interface Database {
           earning_potential?: 'low' | 'medium' | 'high'
           image?: string
           tools?: string[]
+          version?: number
+          collaborators?: string[] | null
+          progress?: number | null
+          revenue_target?: number | null
+          current_revenue?: number | null
+          category?: string | null
+          launch_date?: string | null
+          last_milestone?: string | null
+          priority?: 'low' | 'medium' | 'high' | null
+          due_date?: string | null
+          milestones?: Json | null
+          github_url?: string | null
+          website_url?: string | null
         }
       }
       profiles: {
