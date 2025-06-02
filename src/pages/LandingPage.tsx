@@ -9,46 +9,81 @@ const LandingPage = () => {
       {/* Hero Section */}
       <section className="relative overflow-hidden py-20 md:py-32">
         <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-4xl mx-auto text-center">
-            <motion.h1 
-              className="text-4xl md:text-6xl font-mono font-bold mb-6 leading-tight"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            {/* Text Content */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6 }}
             >
-              <span className="text-white">Stop scrolling tools.</span><br />
-              <span className="gradient-text">Start building side hustles.</span>
-            </motion.h1>
-            
-            <motion.p 
-              className="text-lg md:text-xl text-dark-200 mb-8 max-w-2xl mx-auto"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-            >
-              Hustle.dev helps you discover, save, and act on developer side projects — fast.
-            </motion.p>
-            
-            <motion.div 
-              className="flex flex-col sm:flex-row items-center justify-center gap-4"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-            >
-              <Link 
-                to="/explore" 
-                className="btn btn-primary neon-glow neon-purple text-white px-8 py-3 rounded-md"
-              >
-                Explore Ideas
-                <ChevronRight size={18} className="ml-1" />
-              </Link>
+              <h1 className="text-4xl md:text-6xl font-mono font-bold mb-6 leading-tight">
+                <span className="text-white">Stop scrolling tools.</span><br />
+                <span className="gradient-text">Start building side hustles.</span>
+              </h1>
               
-              <Link 
-                to="/login" 
-                className="btn btn-secondary px-8 py-3 rounded-md"
+              <motion.p 
+                className="text-lg md:text-xl text-dark-200 mb-8"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
               >
-                Sign In
-              </Link>
+                Hustle.dev helps you discover, save, and act on developer side projects — fast.
+              </motion.p>
+              
+              <motion.div 
+                className="flex flex-col sm:flex-row items-start gap-4"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.4 }}
+              >
+                <Link 
+                  to="/explore" 
+                  className="btn btn-primary neon-glow neon-purple text-white px-8 py-3 rounded-md"
+                >
+                  Explore Ideas
+                  <ChevronRight size={18} className="ml-1" />
+                </Link>
+                
+                <Link 
+                  to="/login" 
+                  className="btn btn-secondary px-8 py-3 rounded-md"
+                >
+                  Sign In
+                </Link>
+              </motion.div>
+            </motion.div>
+
+            {/* Logo Animation */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6 }}
+              className="relative w-full max-w-md mx-auto"
+            >
+              <motion.div
+                className="absolute inset-0"
+                initial={{ opacity: 1 }}
+                animate={{ opacity: [1, 0, 1] }}
+                transition={{ duration: 4, repeat: Infinity }}
+              >
+                <img 
+                  src="/3.png" 
+                  alt="Hustle Cat Happy"
+                  className="w-full h-auto"
+                />
+              </motion.div>
+              <motion.div
+                className="absolute inset-0"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: [0, 1, 0] }}
+                transition={{ duration: 4, repeat: Infinity }}
+              >
+                <img 
+                  src="/4.png" 
+                  alt="Hustle Cat Focused"
+                  className="w-full h-auto"
+                />
+              </motion.div>
             </motion.div>
           </div>
         </div>
