@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // Pages
 import LandingPage from './pages/LandingPage';
@@ -43,25 +44,27 @@ function App() {
       <Toast />
       
       <AnimatePresence mode="wait">
-        <Routes location={location} key={location.pathname}>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/signup" element={<SignupPage />} />
-          <Route path="/auth/callback" element={<AuthCallback />} />
-          
-          <Route element={<Layout />}>
-            <Route path="/explore" element={<ExplorePage />} />
+        <ErrorBoundary>
+          <Routes location={location} key={location.pathname}>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<SignupPage />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
             
-            <Route element={<ProtectedRoute />}>
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/profile" element={<ProfilePage />} />
-              <Route path="/bot" element={<BotPage />} />
-              <Route path="/templates" element={<TemplatesPage />} />
+            <Route element={<Layout />}>
+              <Route path="/explore" element={<ExplorePage />} />
+              
+              <Route element={<ProtectedRoute />}>
+                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/bot" element={<BotPage />} />
+                <Route path="/templates" element={<TemplatesPage />} />
+              </Route>
             </Route>
-          </Route>
-          
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
+            
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+        </ErrorBoundary>
       </AnimatePresence>
     </div>
   );
