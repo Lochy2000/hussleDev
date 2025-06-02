@@ -7,17 +7,26 @@ const AuthCallback = () => {
 
   useEffect(() => {
     const handleAuthCallback = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      
-      if (error) {
-        console.error('Error during auth callback:', error);
-        navigate('/login');
-        return;
-      }
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error during auth callback:', error);
+          navigate('/login');
+          return;
+        }
 
-      if (session) {
-        navigate('/dashboard');
-      } else {
+        if (session) {
+          // Clear the URL hash to remove the access token
+          if (window.location.hash) {
+            window.history.replaceState(null, '', window.location.pathname);
+          }
+          navigate('/dashboard');
+        } else {
+          navigate('/login');
+        }
+      } catch (error) {
+        console.error('Error handling auth callback:', error);
         navigate('/login');
       }
     };
