@@ -1,8 +1,11 @@
 import { useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { Database } from '../lib/database.types';
+import toast from 'react-hot-toast';
 
 type Hustle = Database['public']['Tables']['hustles']['Row'];
+type HustleInsert = Database['public']['Tables']['hustles']['Insert'];
+type HustleUpdate = Database['public']['Tables']['hustles']['Update'];
 
 interface GetHustlesOptions {
   page?: number;
@@ -31,22 +34,18 @@ export function useSupabase() {
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
-      // Apply search filter
       if (search) {
         query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
       }
 
-      // Apply status filter
       if (status) {
         query = query.eq('status', status);
       }
 
-      // Apply tags filter
       if (tags.length > 0) {
         query = query.contains('tags', tags);
       }
 
-      // Apply pagination
       query = query.range(offset, offset + limit - 1);
 
       const { data, error, count } = await query;
@@ -59,7 +58,7 @@ export function useSupabase() {
     }
   }, []);
 
-  const createHustle = useCallback(async (hustle: Omit<Hustle, 'id' | 'created_at' | 'updated_at'>) => {
+  const createHustle = useCallback(async (hustle: HustleInsert) => {
     try {
       const { data, error } = await supabase
         .from('hustles')
@@ -68,14 +67,16 @@ export function useSupabase() {
         .single();
 
       if (error) throw error;
+      toast.success('Hustle created successfully');
       return data;
     } catch (error) {
       console.error('Error creating hustle:', error);
+      toast.error('Failed to create hustle');
       throw error;
     }
   }, []);
 
-  const updateHustle = useCallback(async (id: string, updates: Partial<Hustle>) => {
+  const updateHustle = useCallback(async (id: string, updates: HustleUpdate) => {
     try {
       const { data, error } = await supabase
         .from('hustles')
@@ -85,9 +86,11 @@ export function useSupabase() {
         .single();
 
       if (error) throw error;
+      toast.success('Hustle updated successfully');
       return data;
     } catch (error) {
       console.error('Error updating hustle:', error);
+      toast.error('Failed to update hustle');
       throw error;
     }
   }, []);
@@ -100,8 +103,10 @@ export function useSupabase() {
         .eq('id', id);
 
       if (error) throw error;
+      toast.success('Hustle deleted successfully');
     } catch (error) {
       console.error('Error deleting hustle:', error);
+      toast.error('Failed to delete hustle');
       throw error;
     }
   }, []);
