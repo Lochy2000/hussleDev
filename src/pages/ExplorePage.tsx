@@ -1,90 +1,90 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Filter, Search, X, Bookmark, BookmarkCheck, Clock, DollarSign, Code } from 'lucide-react';
-import { hustleData, Hustle, HustleTag, TimeCommitment, EarningPotential } from '../data/hustleData';
+import { useAuth } from '../contexts/AuthContext';
+import { useHustleManagement } from '../hooks/useHustleManagement';
+import HustleModal from '../components/ui/HustleModal';
+import { Database } from '../lib/database.types';
+import toast from 'react-hot-toast';
+
+type Hustle = Database['public']['Tables']['hustles']['Row'];
 
 const ExplorePage = () => {
-  const [hustles, setHustles] = useState<Hustle[]>(hustleData);
+  const { currentUser } = useAuth();
+  const { createHustle } = useHustleManagement();
+  const [hustles, setHustles] = useState<Hustle[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedTags, setSelectedTags] = useState<HustleTag[]>([]);
-  const [timeFilter, setTimeFilter] = useState<TimeCommitment | ''>('');
-  const [earningFilter, setEarningFilter] = useState<EarningPotential | ''>('');
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [timeFilter, setTimeFilter] = useState<string>('');
+  const [earningFilter, setEarningFilter] = useState<string>('');
   const [savedHustles, setSavedHustles] = useState<string[]>([]);
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
+  const [selectedHustle, setSelectedHustle] = useState<Hustle | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const allTags: HustleTag[] = [
-    'fullstack', 'frontend', 'backend', 'mobile', 'ai', 
-    'saas', 'tool', 'extension', 'web3', 'beginner',
-    'intermediate', 'advanced'
-  ];
-
-  // Load saved hustles from localStorage
+  // Load hustles from API
   useEffect(() => {
-    const saved = localStorage.getItem('savedHustles');
-    if (saved) {
-      setSavedHustles(JSON.parse(saved));
-    }
+    // For now, we'll use the mock data
+    setHustles(hustleData);
   }, []);
 
-  // Save to localStorage when savedHustles changes
+  // Load saved hustles for the current user
   useEffect(() => {
-    localStorage.setItem('savedHustles', JSON.stringify(savedHustles));
-  }, [savedHustles]);
+    if (currentUser) {
+      // TODO: Load saved hustles from the database
+      const saved = localStorage.getItem('savedHustles');
+      if (saved) {
+        setSavedHustles(JSON.parse(saved));
+      }
+    }
+  }, [currentUser]);
 
-  // Filter hustles based on search term and filters
-  useEffect(() => {
-    let filtered = [...hustleData];
-
-    // Apply search filter
-    if (searchTerm) {
-      filtered = filtered.filter(
-        hustle =>
-          hustle.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          hustle.description.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+  const handleSaveHustle = async (hustle: Hustle) => {
+    if (!currentUser) {
+      toast.error('Please sign in to save hustles');
+      return;
     }
 
-    // Apply tag filters
-    if (selectedTags.length > 0) {
-      filtered = filtered.filter(hustle =>
-        selectedTags.some(tag => hustle.tags.includes(tag))
-      );
+    try {
+      // Create a new hustle record for the user
+      await createHustle({
+        title: hustle.title,
+        description: hustle.description,
+        tags: hustle.tags,
+        time_commitment: hustle.time_commitment,
+        earning_potential: hustle.earning_potential,
+        image: hustle.image,
+        tools: hustle.tools,
+      });
+
+      setSavedHustles(prev => [...prev, hustle.id]);
+      localStorage.setItem('savedHustles', JSON.stringify([...savedHustles, hustle.id]));
+      toast.success('Hustle saved successfully');
+    } catch (error) {
+      console.error('Error saving hustle:', error);
+      toast.error('Failed to save hustle');
     }
-
-    // Apply time commitment filter
-    if (timeFilter) {
-      filtered = filtered.filter(hustle => hustle.timeCommitment === timeFilter);
-    }
-
-    // Apply earning potential filter
-    if (earningFilter) {
-      filtered = filtered.filter(hustle => hustle.earningPotential === earningFilter);
-    }
-
-    setHustles(filtered);
-  }, [searchTerm, selectedTags, timeFilter, earningFilter]);
-
-  const toggleTag = (tag: HustleTag) => {
-    setSelectedTags(prev =>
-      prev.includes(tag)
-        ? prev.filter(t => t !== tag)
-        : [...prev, tag]
-    );
   };
 
-  const resetFilters = () => {
-    setSelectedTags([]);
-    setTimeFilter('');
-    setEarningFilter('');
+  const handleHustleClick = (hustle: Hustle) => {
+    setSelectedHustle(hustle);
+    setIsModalOpen(true);
   };
 
-  const toggleSaveHustle = (id: string) => {
-    setSavedHustles(prev =>
-      prev.includes(id)
-        ? prev.filter(savedId => savedId !== id)
-        : [...prev, id]
-    );
-  };
+  // Filter hustles based on search and filters
+  const filteredHustles = hustles.filter(hustle => {
+    const matchesSearch = searchTerm === '' || 
+      hustle.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      hustle.description.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesTags = selectedTags.length === 0 || 
+      selectedTags.some(tag => hustle.tags.includes(tag));
+
+    const matchesTime = !timeFilter || hustle.time_commitment === timeFilter;
+    const matchesEarning = !earningFilter || hustle.earning_potential === earningFilter;
+
+    return matchesSearch && matchesTags && matchesTime && matchesEarning;
+  });
 
   return (
     <div className="container mx-auto pb-12">
@@ -93,7 +93,6 @@ const ExplorePage = () => {
         <p className="text-dark-300">Discover developer side hustle ideas and start building today</p>
       </div>
 
-      {/* Search and Filter Section */}
       <div className="mb-8 flex flex-col md:flex-row gap-4">
         <div className="relative flex-1">
           <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-dark-400" />
@@ -122,7 +121,11 @@ const ExplorePage = () => {
 
           {(selectedTags.length > 0 || timeFilter || earningFilter) && (
             <button
-              onClick={resetFilters}
+              onClick={() => {
+                setSelectedTags([]);
+                setTimeFilter('');
+                setEarningFilter('');
+              }}
               className="btn btn-outline flex items-center"
             >
               <X size={16} className="mr-1" />
@@ -132,7 +135,6 @@ const ExplorePage = () => {
         </div>
       </div>
 
-      {/* Filter Menu */}
       {isFilterMenuOpen && (
         <motion.div
           initial={{ opacity: 0, height: 0 }}
@@ -169,7 +171,7 @@ const ExplorePage = () => {
                 Time Commitment
               </h3>
               <div className="flex gap-2">
-                {(['low', 'medium', 'high'] as TimeCommitment[]).map(time => (
+                {(['low', 'medium', 'high'] as const).map(time => (
                   <button
                     key={time}
                     onClick={() => setTimeFilter(timeFilter === time ? '' : time)}
@@ -191,7 +193,7 @@ const ExplorePage = () => {
                 Earning Potential
               </h3>
               <div className="flex gap-2">
-                {(['low', 'medium', 'high'] as EarningPotential[]).map(earning => (
+                {(['low', 'medium', 'high'] as const).map(earning => (
                   <button
                     key={earning}
                     onClick={() => setEarningFilter(earningFilter === earning ? '' : earning)}
@@ -210,23 +212,22 @@ const ExplorePage = () => {
         </motion.div>
       )}
 
-      {/* Results Count */}
       <div className="mb-6">
         <p className="text-dark-400 text-sm">
-          Showing {hustles.length} side hustle ideas
+          Showing {filteredHustles.length} side hustle ideas
         </p>
       </div>
 
-      {/* Hustle Grid */}
-      {hustles.length > 0 ? (
+      {filteredHustles.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {hustles.map((hustle, index) => (
+          {filteredHustles.map((hustle, index) => (
             <motion.div
               key={hustle.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: index * 0.05 }}
-              className="card overflow-hidden flex flex-col h-full"
+              className="card overflow-hidden flex flex-col h-full group cursor-pointer"
+              onClick={() => handleHustleClick(hustle)}
             >
               <div className="relative h-48 overflow-hidden">
                 <img
@@ -235,7 +236,10 @@ const ExplorePage = () => {
                   className="w-full h-full object-cover"
                 />
                 <button
-                  onClick={() => toggleSaveHustle(hustle.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSaveHustle(hustle);
+                  }}
                   className="absolute top-3 right-3 w-8 h-8 rounded-full bg-dark-900/70 backdrop-blur-sm flex items-center justify-center text-white hover:bg-dark-800 transition-colors"
                 >
                   {savedHustles.includes(hustle.id) ? (
@@ -264,11 +268,11 @@ const ExplorePage = () => {
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div className="flex items-center text-dark-300">
                     <Clock size={14} className="mr-1" />
-                    <span className="capitalize">{hustle.timeCommitment}</span> time
+                    <span className="capitalize">{hustle.time_commitment}</span> time
                   </div>
                   <div className="flex items-center text-dark-300">
                     <DollarSign size={14} className="mr-1" />
-                    <span className="capitalize">{hustle.earningPotential}</span> earnings
+                    <span className="capitalize">{hustle.earning_potential}</span> earnings
                   </div>
                 </div>
                 
@@ -291,11 +295,29 @@ const ExplorePage = () => {
           <p className="text-dark-300 mb-6">
             Try adjusting your search terms or filters
           </p>
-          <button onClick={resetFilters} className="btn btn-secondary">
+          <button 
+            onClick={() => {
+              setSelectedTags([]);
+              setTimeFilter('');
+              setEarningFilter('');
+            }} 
+            className="btn btn-secondary"
+          >
             Reset Filters
           </button>
         </div>
       )}
+
+      <HustleModal
+        hustle={selectedHustle}
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedHustle(null);
+        }}
+        onSave={(id) => selectedHustle && handleSaveHustle(selectedHustle)}
+        isSaved={selectedHustle ? savedHustles.includes(selectedHustle.id) : false}
+      />
     </div>
   );
 };
