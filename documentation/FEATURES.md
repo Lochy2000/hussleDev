@@ -2,7 +2,7 @@
 
 ## Core Features
 
-### Authentication
+### Authentication ✅
 - Email/password authentication
 - GitHub OAuth integration
 - Protected routes
@@ -10,7 +10,7 @@
 - Form validation using Zod
 - Toast notifications for success/error states
 
-### User Management
+### User Management ✅
 - User profiles with avatars
 - Profile customization
   - Basic info (name, username)
@@ -19,22 +19,25 @@
   - Skills and interests
 - Avatar upload with Supabase Storage
 
-### Hustle Management
+### Hustle Management ✅
 - Create, read, update, delete (CRUD) operations
 - Real-time updates using Supabase subscriptions
 - Status tracking (saved, in-progress, launched)
 - Notes and progress tracking
 - Tags and categorization
 - Time commitment and earning potential indicators
+- Milestones tracking ⏳
+- Revenue tracking ⏳
+- Due dates and priorities ⏳
 
-### Dashboard
+### Dashboard ✅
 - Kanban-style board layout
-- Drag-and-drop organization (coming soon)
 - Progress tracking
 - Quick actions (start, launch, notes)
 - Real-time updates
+- Drag-and-drop organization ⏳
 
-### Explore Page
+### Explore Page ✅
 - Curated list of side hustle ideas
 - Advanced filtering
   - By tags
@@ -42,15 +45,16 @@
   - By earning potential
 - Search functionality
 - Save to dashboard feature
+- Infinite scroll ⏳
 
-### HustleBot
+### HustleBot ⏳
 - AI-powered project suggestions
 - Context-aware responses
 - Example prompts
 - Copy-to-clipboard functionality
 - Markdown support
 
-### Templates Hub
+### Templates Hub ⏳
 - Ready-to-use project templates
 - Technology stack filtering
 - Complexity indicators
@@ -59,84 +63,40 @@
 
 ## Technical Features
 
-### Real-time Updates
+### Real-time Updates ✅
 - WebSocket connections for live data
 - Automatic UI updates
 - Optimistic updates for better UX
 - Fallback to polling when needed
 
-### Form Validation
+### Form Validation ✅
 - Zod schema validation
 - Real-time validation
 - Custom error messages
 - Type inference
 
-### Error Handling
+### Error Handling ✅
 - Toast notifications
 - Graceful error recovery
 - Detailed error messages
 - Error boundary implementation
 
-### Security
+### Security ✅
 - Row Level Security (RLS)
 - Protected API routes
 - Input sanitization
-- Rate limiting (coming soon)
+- Rate limiting
 
-### Performance
+### Performance ✅
 - Code splitting
 - Lazy loading
 - Optimized images
 - Caching strategies
+- React Query integration
+- Infinite scroll
+- Loading skeletons
 
-## Usage Examples
-
-### Authentication
-```typescript
-// Login with email
-await login(email, password);
-
-// Login with GitHub
-await loginWithGithub();
-```
-
-### Profile Management
-```typescript
-// Update profile
-await updateProfile(userId, {
-  username: 'johndoe',
-  full_name: 'John Doe',
-  bio: 'Full-stack developer'
-});
-
-// Upload avatar
-await uploadAvatar(file);
-```
-
-### Hustle Management
-```typescript
-// Create hustle
-await createHustle({
-  title: 'My Project',
-  description: 'Project description',
-  status: 'saved'
-});
-
-// Update status
-await updateHustle(id, { status: 'in-progress' });
-```
-
-### Real-time Updates
-```typescript
-// Subscribe to changes
-const channel = supabase
-  .channel('hustles')
-  .on('INSERT', handleNewHustle)
-  .on('UPDATE', handleHustleUpdate)
-  .subscribe();
-```
-
-## Image Optimization
+## Image Optimization ✅
 
 ### Features
 - Automatic image optimization
@@ -152,21 +112,6 @@ const channel = supabase
 - Supabase Storage integration
 - Automatic WebP conversion
 - Responsive image sizes
-
-### Usage Example
-```typescript
-// Upload and optimize an image
-const imageUrl = await uploadImage(file, 'hustles', 'my-image.webp');
-
-// Validate an image
-const validation = await validateImage(file);
-if (!validation.valid) {
-  console.error(validation.error);
-}
-
-// Delete an image
-await deleteImage('hustles/my-image.webp');
-```
 
 ### Image Sizes
 - Thumbnail: 200x200
