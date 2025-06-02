@@ -12,6 +12,7 @@ import BotPage from './pages/BotPage';
 import TemplatesPage from './pages/TemplatesPage';
 import ProfilePage from './pages/ProfilePage';
 import NotFoundPage from './pages/NotFoundPage';
+import AuthCallback from './pages/AuthCallback';
 
 // Components
 import ProtectedRoute from './components/auth/ProtectedRoute';
@@ -46,6 +47,7 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
           
           <Route element={<Layout />}>
             <Route path="/explore" element={<ExplorePage />} />
@@ -65,4 +67,4 @@ function App() {
   );
 }
 
-export default App
+export default App;
