@@ -4,17 +4,55 @@ import { Database } from '../lib/database.types';
 
 type Hustle = Database['public']['Tables']['hustles']['Row'];
 
+interface GetHustlesOptions {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+  tags?: string[];
+}
+
 export function useSupabase() {
-  const getHustles = useCallback(async (userId: string) => {
+  const getHustles = useCallback(async (userId: string, options: GetHustlesOptions = {}) => {
     try {
-      const { data, error } = await supabase
+      const {
+        page = 1,
+        limit = 10,
+        search = '',
+        status,
+        tags = []
+      } = options;
+
+      const offset = (page - 1) * limit;
+
+      let query = supabase
         .from('hustles')
-        .select('*')
+        .select('*', { count: 'exact' })
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
+      // Apply search filter
+      if (search) {
+        query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
+      }
+
+      // Apply status filter
+      if (status) {
+        query = query.eq('status', status);
+      }
+
+      // Apply tags filter
+      if (tags.length > 0) {
+        query = query.contains('tags', tags);
+      }
+
+      // Apply pagination
+      query = query.range(offset, offset + limit - 1);
+
+      const { data, error, count } = await query;
+
       if (error) throw error;
-      return data;
+      return { data, count: count || 0, page, limit };
     } catch (error) {
       console.error('Error fetching hustles:', error);
       throw error;
