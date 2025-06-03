@@ -26,9 +26,9 @@
 - Notes and progress tracking
 - Tags and categorization
 - Time commitment and earning potential indicators
-- Milestones tracking ⏳
-- Revenue tracking ⏳
-- Due dates and priorities ⏳
+- Milestones tracking
+- Revenue tracking
+- Due dates and priorities
 
 ### Dashboard ✅
 - Kanban-style board layout
@@ -37,7 +37,7 @@
 - Real-time updates
 - Drag-and-drop organization ⏳
 
-### Explore Page ✅
+### Explore Page ⏳
 - Curated list of side hustle ideas
 - Advanced filtering
   - By tags
@@ -45,7 +45,7 @@
   - By earning potential
 - Search functionality
 - Save to dashboard feature
-- Infinite scroll ⏳
+- Infinite scroll
 
 ### HustleBot ⏳
 - AI-powered project suggestions

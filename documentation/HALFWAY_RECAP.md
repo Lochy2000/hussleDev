@@ -21,6 +21,10 @@
 - Profiles table with user data
 - Row Level Security (RLS) policies
 - Storage buckets for avatars
+- Real-time subscriptions
+- CRUD operations for hustles
+- Status management system
+- Notes and progress tracking
 
 ### UI/UX
 - Responsive navigation
@@ -41,20 +45,9 @@
 ### Dashboard
 - Kanban board layout is created but needs:
   - Drag and drop functionality
-  - Real-time updates
-  - Progress tracking
   - Quick actions implementation
 
 ## ❌ Pending Implementation
-
-### Hustle Management
-- Create new hustle functionality
-- Edit hustle details
-- Delete hustle confirmation
-- Status updates
-- Notes and progress tracking
-- Tags system
-- Real-time updates using Supabase subscriptions
 
 ### Explore Page
 - Filter implementation
@@ -91,25 +84,19 @@
 
 ## 🔄 Next Steps Priority
 
-1. **Hustle Management**
-   - Implement CRUD operations for hustles
-   - Set up real-time subscriptions
-   - Add status management
-   - Implement notes system
-
-2. **Explore Page**
+1. **Explore Page**
    - Add filtering and search
    - Implement save functionality
    - Add pagination
    - Set up sorting
 
-3. **HustleBot**
+2. **HustleBot**
    - Set up Gemini API integration
    - Implement chat interface
    - Add response streaming
    - Create prompt templates
 
-4. **Templates**
+3. **Templates**
    - Create template system
    - Add filtering
    - Implement preview
