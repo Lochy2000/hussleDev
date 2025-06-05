@@ -21,3 +21,25 @@ export async function generateHustleIdea(prompt: string) {
     throw error;
   }
 }
+
+export async function generateResponse(message: string, history: string[]) {
+  try {
+    // Convert history into a format that Gemini can understand
+    const formattedHistory = history.map(msg => ({
+      role: msg.startsWith('User: ') ? 'user' : 'model',
+      parts: [{ text: msg.replace(/^(User: |Assistant: )/, '') }]
+    }));
+
+    // Add the current message
+    const chat = geminiModel.startChat({
+      history: formattedHistory,
+    });
+
+    const result = await chat.sendMessage(message);
+    const response = await result.response;
+    return response.text();
+  } catch (error) {
+    console.error('Error generating response:', error);
+    throw error;
+  }
+}
