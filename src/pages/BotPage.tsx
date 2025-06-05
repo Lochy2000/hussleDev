@@ -1,6 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bot, Send, ArrowRight, User, RefreshCw, Copy, Check } from 'lucide-react';
+import { generateResponse } from '../lib/gemini';
+import ReactMarkdown from 'react-markdown';
+import toast from 'react-hot-toast';
 
 interface Message {
   id: string;
@@ -38,9 +41,9 @@ const BotPage = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (inputValue.trim() === '') return;
+    if (inputValue.trim() === '' || isLoading) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -53,39 +56,28 @@ const BotPage = () => {
     setInputValue('');
     setIsLoading(true);
 
-    // Simulate AI response after a delay
-    setTimeout(() => {
-      generateBotResponse(inputValue);
-    }, 1500);
-  };
+    try {
+      // Create context from previous messages
+      const context = messages.map(msg => 
+        `${msg.sender === 'user' ? 'User: ' : 'Assistant: '}${msg.content}`
+      );
 
-  const generateBotResponse = (userInput: string) => {
-    let botResponse = '';
+      const response = await generateResponse(userMessage.content, context);
 
-    // Very simple pattern matching for demo purposes
-    const input = userInput.toLowerCase();
+      const botMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: response,
+        sender: 'bot',
+        timestamp: new Date()
+      };
 
-    if (input.includes('saas') || input.includes('notion')) {
-      botResponse = "Here are three Notion-based SaaS ideas:\n\n1. **Notion Templates Marketplace**: Create a platform where people can buy and sell custom Notion templates for various use cases like project management, personal finance tracking, or content calendars.\n\n2. **Notion API Integration Platform**: Build a service that connects Notion to other tools without coding, similar to Zapier but specifically optimized for Notion workflows.\n\n3. **Notion Analytics Dashboard**: Develop a tool that gives teams insights into how they're using Notion - which pages get the most views, who contributes most, and how information flows.";
-    } else if (input.includes('react') || input.includes('javascript')) {
-      botResponse = "As a React/JavaScript developer, you have many profitable side hustle options:\n\n1. **Custom React Component Library**: Create premium, highly customizable UI components that save other developers time.\n\n2. **React Performance Consulting**: Offer services to optimize slow React applications.\n\n3. **React Course or Ebook**: Create educational content teaching specific React patterns or techniques.\n\n4. **React Plugins/Extensions**: Develop and sell plugins for popular React-based platforms like Gatsby or Next.js.\n\n5. **React App Templates**: Build and sell starter templates for common applications like dashboards, e-commerce, or portfolio sites.";
-    } else if (input.includes('tech stack') || input.includes('productivity')) {
-      botResponse = "For a modern productivity app, I recommend this tech stack:\n\n**Frontend**:\n- Next.js (React framework with SSR)\n- TailwindCSS for styling\n- SWR or React Query for data fetching\n- Framer Motion for animations\n\n**Backend**:\n- Node.js with Express or Nest.js\n- Prisma as an ORM\n- PostgreSQL for database\n\n**Authentication**:\n- NextAuth.js or Clerk\n\n**Deployment**:\n- Vercel for frontend\n- Railway or Render for backend\n- Supabase or Neon for PostgreSQL\n\nThis stack gives you great developer experience, performance, and scalability with minimal configuration.";
-    } else if (input.includes('monetize')) {
-      botResponse = "Here are effective ways to monetize your developer skills:\n\n1. **Freelancing**: Platforms like Upwork, Toptal, or specialized ones like React Jobs.\n\n2. **Digital Products**: Sell templates, components, or plugins on marketplaces like Gumroad or your own site.\n\n3. **Educational Content**: Create courses on platforms like Udemy or eBooks.\n\n4. **SaaS Products**: Build small software tools that solve specific problems.\n\n5. **Open Source Monetization**: Create a popular OSS project and offer premium support or enterprise features.\n\n6. **Technical Writing**: Write for publications that pay for technical content.\n\n7. **Code Reviews**: Offer professional code review services.";
-    } else {
-      botResponse = "That's an interesting question about developer side hustles. Here are some general ideas:\n\n1. **Niche Website Builder**: Create a specialized website builder for a specific industry.\n\n2. **Developer Tools**: Build VS Code extensions or CLI tools that solve common pain points.\n\n3. **API Integrations**: Create middleware that connects popular services in unique ways.\n\n4. **Technical Blogging**: Start a blog focusing on solving specific technical problems.\n\n5. **Automation Services**: Offer to automate business processes for non-technical clients.\n\nWould you like me to elaborate on any of these ideas?";
+      setMessages(prev => [...prev, botMessage]);
+    } catch (error) {
+      console.error('Error generating response:', error);
+      toast.error('Failed to generate response. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
-
-    const newBotMessage: Message = {
-      id: Date.now().toString(),
-      content: botResponse,
-      sender: 'bot',
-      timestamp: new Date()
-    };
-
-    setMessages(prev => [...prev, newBotMessage]);
-    setIsLoading(false);
   };
 
   const handlePromptClick = (prompt: string) => {
@@ -96,6 +88,7 @@ const BotPage = () => {
     navigator.clipboard.writeText(content);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
+    toast.success('Copied to clipboard');
   };
 
   return (
@@ -133,24 +126,9 @@ const BotPage = () => {
                           <Bot size={14} className="text-hustle-300" />
                         </div>
                       )}
-                      <div>
-                        <div className="whitespace-pre-line">
-                          {message.content.split('\n').map((line, i) => {
-                            // Replace markdown bold with proper styling
-                            const boldPattern = /\*\*(.*?)\*\*/g;
-                            const styledLine = line.replace(
-                              boldPattern,
-                              (_, text) => `<strong>${text}</strong>`
-                            );
-                            
-                            return (
-                              <p 
-                                key={i} 
-                                className="mb-2 last:mb-0"
-                                dangerouslySetInnerHTML={{ __html: styledLine }}
-                              />
-                            );
-                          })}
+                      <div className="flex-1 min-w-0">
+                        <div className="prose prose-invert max-w-none">
+                          <ReactMarkdown>{message.content}</ReactMarkdown>
                         </div>
                         <div className="text-xs opacity-50 mt-1">
                           {message.timestamp.toLocaleTimeString([], {
