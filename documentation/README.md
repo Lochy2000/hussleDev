@@ -44,6 +44,8 @@ npm run build
 - Framer Motion for animations
 - React Router for navigation
 - Zod for form validation
+- React Query for data fetching
+- React Markdown for content rendering
 
 ### Backend
 - Supabase for backend services
@@ -51,11 +53,13 @@ npm run build
 - Row Level Security
 - Storage for avatars
 - OAuth integration
+- Gemini AI integration
 
 ### State Management
 - React Context for auth state
 - Custom hooks for data fetching
 - Real-time subscriptions for live updates
+- React Query for server state
 
 ## Testing
 Run tests:

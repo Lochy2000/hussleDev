@@ -37,6 +37,24 @@
 - Real-time updates
 - Drag-and-drop organization ⏳
 
+### Templates Hub ✅
+- Ready-to-use project templates
+- Technology stack filtering
+- Complexity indicators
+- Setup time estimates
+- Quick start functionality
+- Download tracking
+- Preview functionality
+- Repository integration
+
+### HustleBot ✅
+- AI-powered project suggestions
+- Context-aware responses
+- Example prompts
+- Copy-to-clipboard functionality
+- Markdown support
+- Real-time chat interface
+
 ### Explore Page ⏳
 - Curated list of side hustle ideas
 - Advanced filtering
@@ -46,20 +64,6 @@
 - Search functionality
 - Save to dashboard feature
 - Infinite scroll
-
-### HustleBot ⏳
-- AI-powered project suggestions
-- Context-aware responses
-- Example prompts
-- Copy-to-clipboard functionality
-- Markdown support
-
-### Templates Hub ⏳
-- Ready-to-use project templates
-- Technology stack filtering
-- Complexity indicators
-- Setup time estimates
-- Quick start functionality
 
 ## Technical Features
 
