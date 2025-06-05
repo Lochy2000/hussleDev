@@ -9,6 +9,80 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      templates: {
+        Row: {
+          id: string
+          created_at: string
+          updated_at: string
+          title: string
+          description: string
+          technologies: string[]
+          complexity: 'beginner' | 'intermediate' | 'advanced'
+          setup_time: number
+          repository_url: string
+          preview_url: string | null
+          image_url: string
+          stars: number
+          downloads: number
+          author_id: string
+          features: string[]
+          requirements: string[]
+          installation: string
+          configuration: string
+          category: string
+          framework: string
+          license: string
+          version: string
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          title: string
+          description: string
+          technologies: string[]
+          complexity: 'beginner' | 'intermediate' | 'advanced'
+          setup_time: number
+          repository_url: string
+          preview_url?: string | null
+          image_url: string
+          stars?: number
+          downloads?: number
+          author_id: string
+          features: string[]
+          requirements: string[]
+          installation: string
+          configuration: string
+          category: string
+          framework: string
+          license: string
+          version: string
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          title?: string
+          description?: string
+          technologies?: string[]
+          complexity?: 'beginner' | 'intermediate' | 'advanced'
+          setup_time?: number
+          repository_url?: string
+          preview_url?: string | null
+          image_url?: string
+          stars?: number
+          downloads?: number
+          author_id?: string
+          features?: string[]
+          requirements?: string[]
+          installation?: string
+          configuration?: string
+          category?: string
+          framework?: string
+          license?: string
+          version?: string
+        }
+      }
       hustles: {
         Row: {
           id: string
