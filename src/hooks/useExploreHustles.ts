@@ -41,17 +41,10 @@ export function useExploreHustles(filters: FilterOptions = {}): UseExploreHustle
       console.log('🔍 Fetching hustles with filters:', filters);
       console.log('📄 Page:', page, 'Load more:', isLoadMore);
 
-      // Get current user to exclude their personal hustles from explore
-      const { data: userData } = await supabase.auth.getUser();
-      const currentUserId = userData.user?.id;
-      console.log('👤 Current user ID:', currentUserId);
-
       let query = supabase
         .from('hustles')
         .select('*', { count: 'exact' });
 
-      // Show all hustles for everyone (including sample hustles)
-      // This will show sample hustles and other users' hustles
       console.log('🔧 Building query...');
 
       // Apply filters
