@@ -50,38 +50,35 @@ const ExplorePage = () => {
     sortOrder,
   });
 
-  // Debug logging
-  useEffect(() => {
-    console.log('🎯 ExplorePage state update:');
-    console.log('  - Hustles count:', hustles.length);
-    console.log('  - Loading:', loading);
-    console.log('  - Error:', error);
-    console.log('  - Has more:', hasMore);
-    console.log('  - Current filters:', {
-      search: searchTerm,
-      tags: selectedTags,
-      timeCommitment: timeFilter,
-      earningPotential: earningFilter,
-      category,
-      sortBy,
-      sortOrder
-    });
-  }, [hustles, loading, error, hasMore, searchTerm, selectedTags, timeFilter, earningFilter, category, sortBy, sortOrder]);
-
   const { ref } = useInfiniteScroll({
     onLoadMore: loadMore,
     hasMore,
     loading,
   });
 
+  // Load user's saved hustles to show which ones are already saved
   useEffect(() => {
-    if (currentUser) {
-      // Load saved hustle IDs from localStorage for quick UI feedback
-      const saved = localStorage.getItem(`savedHustles_${currentUser.id}`);
-      if (saved) {
-        setSavedHustleIds(new Set(JSON.parse(saved)));
+    const loadSavedHustles = async () => {
+      if (!currentUser) return;
+      
+      try {
+        // Get user's saved hustles to mark them as saved in the UI
+        const { data, error } = await supabase
+          .from('hustles')
+          .select('id, title')
+          .eq('user_id', currentUser.id);
+
+        if (error) throw error;
+
+        // Create a set of saved hustle titles (since we're comparing by title, not ID)
+        const savedTitles = new Set(data?.map(h => h.title) || []);
+        setSavedHustleIds(savedTitles);
+      } catch (error) {
+        console.error('Error loading saved hustles:', error);
       }
-    }
+    };
+
+    loadSavedHustles();
   }, [currentUser]);
 
   const handleSaveHustle = async (hustle: Hustle) => {
@@ -90,8 +87,8 @@ const ExplorePage = () => {
       return;
     }
 
-    // Check if already saved
-    if (savedHustleIds.has(hustle.id)) {
+    // Check if already saved by title (since we're creating copies)
+    if (savedHustleIds.has(hustle.title)) {
       toast.info('This hustle is already saved to your dashboard');
       return;
     }
@@ -112,11 +109,8 @@ const ExplorePage = () => {
 
       // Update local state for immediate UI feedback
       const newSavedIds = new Set(savedHustleIds);
-      newSavedIds.add(hustle.id);
+      newSavedIds.add(hustle.title);
       setSavedHustleIds(newSavedIds);
-      
-      // Save to localStorage for persistence
-      localStorage.setItem(`savedHustles_${currentUser.id}`, JSON.stringify([...newSavedIds]));
       
       toast.success('Hustle saved to your dashboard!');
     } catch (error) {
@@ -375,7 +369,7 @@ const ExplorePage = () => {
                     }}
                     className="absolute top-3 right-3 w-8 h-8 rounded-full bg-dark-900/70 backdrop-blur-sm flex items-center justify-center text-white hover:bg-dark-800 transition-colors"
                   >
-                    {savedHustleIds.has(hustle.id) ? (
+                    {savedHustleIds.has(hustle.title) ? (
                       <BookmarkCheck size={16} className="text-hustle-300" />
                     ) : (
                       <Bookmark size={16} />
@@ -455,7 +449,7 @@ const ExplorePage = () => {
           setSelectedHustle(null);
         }}
         onSave={(id) => selectedHustle && handleSaveHustle(selectedHustle)}
-        isSaved={selectedHustle ? savedHustleIds.has(selectedHustle.id) : false}
+        isSaved={selectedHustle ? savedHustleIds.has(selectedHustle.title) : false}
       />
     </div>
   );
