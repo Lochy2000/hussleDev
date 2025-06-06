@@ -23,6 +23,11 @@ const Navbar = () => {
           setProfile(data);
         } catch (error) {
           console.error('Error loading profile:', error);
+          // Don't show error toast, just use fallback data
+          setProfile({
+            full_name: null,
+            avatar_url: null
+          });
         }
       }
     };

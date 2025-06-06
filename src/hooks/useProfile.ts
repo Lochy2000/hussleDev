@@ -13,13 +13,38 @@ export function useProfile() {
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle(); // Use maybeSingle instead of single to handle no results
 
       if (error) throw error;
+      
+      // If no profile exists, create one
+      if (!data) {
+        console.log('No profile found, creating one...');
+        const { data: newProfile, error: createError } = await supabase
+          .from('profiles')
+          .insert({
+            id: userId,
+            username: null,
+            full_name: null,
+            avatar_url: null,
+            website: null,
+            bio: null,
+            twitter_username: null,
+            github_username: null,
+            skills: [],
+            interests: []
+          })
+          .select()
+          .single();
+
+        if (createError) throw createError;
+        return newProfile;
+      }
+      
       return data;
     } catch (error) {
-      console.error('Error fetching profile:', error);
-      toast.error('Failed to load profile');
+      console.error('Error fetching/creating profile:', error);
+      // Don't show toast error for profile issues, just log it
       throw error;
     }
   }, []);
