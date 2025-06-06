@@ -8,6 +8,7 @@ import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import HustleModal from '../components/ui/HustleModal';
 import LoadingSkeleton from '../components/ui/LoadingSkeleton';
 import { Database } from '../lib/database.types';
+import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
 
 type Hustle = Database['public']['Tables']['hustles']['Row'];

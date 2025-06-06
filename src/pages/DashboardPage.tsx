@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Compass, Trash2, PenSquare, Clock, DollarSign, Code, Plus } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useRealtimeHustles } from '../hooks/useRealtimeHustles';
 import { useSupabase } from '../hooks/useSupabase';
@@ -14,6 +14,7 @@ type Hustle = Database['public']['Tables']['hustles']['Row'];
 
 const DashboardPage = () => {
   const { currentUser } = useAuth();
+  const navigate = useNavigate();
   const { hustles = [], loading, error, refetch } = useRealtimeHustles(currentUser?.id || '');
   const { updateHustle, deleteHustle } = useSupabase();
   const [editingNotes, setEditingNotes] = useState<string | null>(null);
@@ -25,7 +26,17 @@ const DashboardPage = () => {
   const moveHustle = async (hustleId: string, newStatus: 'saved' | 'in-progress' | 'launched') => {
     try {
       await updateHustle(hustleId, { status: newStatus });
-      // Real-time subscription will handle the UI update
+      
+      // Show success message based on status
+      if (newStatus === 'in-progress') {
+        toast.success('Hustle moved to In Progress!');
+      } else if (newStatus === 'launched') {
+        toast.success('🚀 Hustle launched! Congratulations!');
+      } else {
+        toast.success('Hustle moved to Saved');
+      }
+      
+      // Real-time subscription will handle the UI update automatically
     } catch (error) {
       toast.error('Failed to update hustle status');
     }
@@ -36,7 +47,8 @@ const DashboardPage = () => {
     
     try {
       await deleteHustle(hustleId);
-      // Real-time subscription will handle the UI update
+      toast.success('Hustle deleted successfully');
+      // Real-time subscription will handle the UI update automatically
     } catch (error) {
       toast.error('Failed to delete hustle');
     }
@@ -51,7 +63,8 @@ const DashboardPage = () => {
     try {
       await updateHustle(hustleId, { notes: noteText });
       setEditingNotes(null);
-      // Real-time subscription will handle the UI update
+      toast.success('Notes saved');
+      // Real-time subscription will handle the UI update automatically
     } catch (error) {
       toast.error('Failed to save notes');
     }
@@ -102,13 +115,22 @@ const DashboardPage = () => {
             <h1 className="text-3xl font-mono font-bold mb-2">Your Hustle Room</h1>
             <p className="text-dark-300">Manage and track your side hustle projects</p>
           </div>
-          <button
-            onClick={() => setIsCreateModalOpen(true)}
-            className="btn btn-primary neon-glow neon-purple flex items-center"
-          >
-            <Plus size={16} className="mr-2" />
-            Create Hustle
-          </button>
+          <div className="flex gap-3">
+            <Link
+              to="/explore"
+              className="btn btn-secondary flex items-center"
+            >
+              <Compass size={16} className="mr-2" />
+              Explore Ideas
+            </Link>
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="btn btn-primary neon-glow neon-purple flex items-center"
+            >
+              <Plus size={16} className="mr-2" />
+              Create Hustle
+            </button>
+          </div>
         </div>
       </div>
 
@@ -148,6 +170,12 @@ const DashboardPage = () => {
               {savedHustles.length === 0 ? (
                 <div className="text-center p-4 border border-dashed border-dark-600 rounded-lg">
                   <p className="text-dark-400 text-sm">No saved hustles</p>
+                  <Link 
+                    to="/explore" 
+                    className="text-hustle-300 hover:text-hustle-200 text-xs mt-1 inline-block"
+                  >
+                    Explore ideas →
+                  </Link>
                 </div>
               ) : (
                 savedHustles.map(hustle => (
@@ -223,7 +251,7 @@ const DashboardPage = () => {
                               e.stopPropagation();
                               moveHustle(hustle.id, 'in-progress');
                             }}
-                            className="text-xs bg-dark-600 hover:bg-dark-500 text-dark-200 px-2 py-1 rounded"
+                            className="text-xs bg-hustle-600 hover:bg-hustle-500 text-white px-2 py-1 rounded transition-colors"
                           >
                             Start
                           </button>
@@ -232,7 +260,7 @@ const DashboardPage = () => {
                               e.stopPropagation();
                               startEditingNotes(hustle.id, hustle.notes || '');
                             }}
-                            className="text-xs bg-dark-600 hover:bg-dark-500 text-dark-200 px-2 py-1 rounded flex items-center"
+                            className="text-xs bg-dark-600 hover:bg-dark-500 text-dark-200 px-2 py-1 rounded flex items-center transition-colors"
                           >
                             <PenSquare size={10} className="mr-1" />
                             Notes
@@ -243,7 +271,7 @@ const DashboardPage = () => {
                             e.stopPropagation();
                             removeHustle(hustle.id);
                           }}
-                          className="text-dark-400 hover:text-red-400"
+                          className="text-dark-400 hover:text-red-400 transition-colors"
                         >
                           <Trash2 size={14} />
                         </button>
@@ -351,16 +379,16 @@ const DashboardPage = () => {
                               e.stopPropagation();
                               moveHustle(hustle.id, 'launched');
                             }}
-                            className="text-xs bg-hustle-600 hover:bg-hustle-500 text-white px-2 py-1 rounded"
+                            className="text-xs bg-green-600 hover:bg-green-500 text-white px-2 py-1 rounded transition-colors"
                           >
-                            Launch
+                            Launch 🚀
                           </button>
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               startEditingNotes(hustle.id, hustle.notes || '');
                             }}
-                            className="text-xs bg-dark-600 hover:bg-dark-500 text-dark-200 px-2 py-1 rounded flex items-center"
+                            className="text-xs bg-dark-600 hover:bg-dark-500 text-dark-200 px-2 py-1 rounded flex items-center transition-colors"
                           >
                             <PenSquare size={10} className="mr-1" />
                             Notes
@@ -371,7 +399,7 @@ const DashboardPage = () => {
                             e.stopPropagation();
                             removeHustle(hustle.id);
                           }}
-                          className="text-dark-400 hover:text-red-400"
+                          className="text-dark-400 hover:text-red-400 transition-colors"
                         >
                           <Trash2 size={14} />
                         </button>
@@ -386,7 +414,7 @@ const DashboardPage = () => {
           {/* Launched Column */}
           <div className="bg-dark-800 rounded-lg border border-dark-700 p-4 h-full">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="font-mono font-bold text-lg">Launched</h2>
+              <h2 className="font-mono font-bold text-lg">Launched 🚀</h2>
               <span className="bg-dark-700 text-dark-300 text-xs rounded-full px-2 py-0.5">
                 {launchedHustles.length}
               </span>
@@ -403,7 +431,7 @@ const DashboardPage = () => {
                     key={hustle.id}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-dark-700 rounded-lg overflow-hidden cursor-pointer"
+                    className="bg-dark-700 rounded-lg overflow-hidden cursor-pointer border border-green-800/30"
                     onClick={() => handleHustleClick(hustle)}
                   >
                     <div className="h-24 overflow-hidden">
@@ -470,7 +498,7 @@ const DashboardPage = () => {
                             e.stopPropagation();
                             startEditingNotes(hustle.id, hustle.notes || '');
                           }}
-                          className="text-xs bg-dark-600 hover:bg-dark-500 text-dark-200 px-2 py-1 rounded flex items-center"
+                          className="text-xs bg-dark-600 hover:bg-dark-500 text-dark-200 px-2 py-1 rounded flex items-center transition-colors"
                         >
                           <PenSquare size={10} className="mr-1" />
                           Notes
@@ -480,7 +508,7 @@ const DashboardPage = () => {
                             e.stopPropagation();
                             removeHustle(hustle.id);
                           }}
-                          className="text-dark-400 hover:text-red-400"
+                          className="text-dark-400 hover:text-red-400 transition-colors"
                         >
                           <Trash2 size={14} />
                         </button>
