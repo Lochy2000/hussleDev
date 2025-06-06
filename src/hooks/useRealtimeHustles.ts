@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { Database } from '../lib/database.types';
-import { useSupabase } from './useSupabase';
 import toast from 'react-hot-toast';
 
 type Hustle = Database['public']['Tables']['hustles']['Row'];
@@ -11,20 +10,33 @@ export function useRealtimeHustles(userId: string) {
   const [hustles, setHustles] = useState<Hustle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const { getHustles } = useSupabase();
 
   useEffect(() => {
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
+
     let channel: RealtimeChannel;
 
     const fetchHustles = async () => {
       try {
         setLoading(true);
-        const { data } = await getHustles(userId);
-        setHustles(data || []);
         setError(null);
+
+        const { data, error: fetchError } = await supabase
+          .from('hustles')
+          .select('*')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false });
+
+        if (fetchError) throw fetchError;
+
+        setHustles(data || []);
       } catch (err) {
-        setError(err instanceof Error ? err : new Error('Failed to fetch hustles'));
-        toast.error('Failed to load hustles');
+        const error = err instanceof Error ? err : new Error('Failed to fetch hustles');
+        setError(error);
+        console.error('Error fetching hustles:', error);
       } finally {
         setLoading(false);
       }
@@ -42,10 +54,11 @@ export function useRealtimeHustles(userId: string) {
             filter: `user_id=eq.${userId}`,
           },
           async (payload) => {
+            console.log('Real-time update:', payload);
+            
             switch (payload.eventType) {
               case 'INSERT':
                 setHustles((current) => [payload.new as Hustle, ...current]);
-                toast.success('New hustle added');
                 break;
               case 'UPDATE':
                 setHustles((current) =>
@@ -53,18 +66,18 @@ export function useRealtimeHustles(userId: string) {
                     hustle.id === payload.new.id ? (payload.new as Hustle) : hustle
                   )
                 );
-                toast.success('Hustle updated');
                 break;
               case 'DELETE':
                 setHustles((current) =>
                   current.filter((hustle) => hustle.id !== payload.old.id)
                 );
-                toast.success('Hustle removed');
                 break;
             }
           }
         )
-        .subscribe();
+        .subscribe((status) => {
+          console.log('Subscription status:', status);
+        });
     };
 
     fetchHustles();
@@ -75,7 +88,27 @@ export function useRealtimeHustles(userId: string) {
         supabase.removeChannel(channel);
       }
     };
-  }, [userId, getHustles]);
+  }, [userId]);
 
-  return { hustles, loading, error };
+  const refetch = async () => {
+    if (!userId) return;
+    
+    try {
+      setLoading(true);
+      const { data, error: fetchError } = await supabase
+        .from('hustles')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (fetchError) throw fetchError;
+      setHustles(data || []);
+    } catch (err) {
+      console.error('Error refetching hustles:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { hustles, loading, error, refetch };
 }
