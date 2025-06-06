@@ -35,7 +35,7 @@ const ExplorePage = () => {
   const [category, setCategory] = useState<string>('');
   const [sortBy, setSortBy] = useState<'created_at' | 'title' | 'earning_potential'>('created_at');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  const [savedHustles, setSavedHustles] = useState<string[]>([]);
+  const [savedHustleIds, setSavedHustleIds] = useState<Set<string>>(new Set());
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
   const [selectedHustle, setSelectedHustle] = useState<Hustle | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -58,10 +58,10 @@ const ExplorePage = () => {
 
   useEffect(() => {
     if (currentUser) {
-      // TODO: Load saved hustles from the database
-      const saved = localStorage.getItem('savedHustles');
+      // Load saved hustle IDs from localStorage for quick UI feedback
+      const saved = localStorage.getItem(`savedHustles_${currentUser.id}`);
       if (saved) {
-        setSavedHustles(JSON.parse(saved));
+        setSavedHustleIds(new Set(JSON.parse(saved)));
       }
     }
   }, [currentUser]);
@@ -72,7 +72,14 @@ const ExplorePage = () => {
       return;
     }
 
+    // Check if already saved
+    if (savedHustleIds.has(hustle.id)) {
+      toast.info('This hustle is already saved to your dashboard');
+      return;
+    }
+
     try {
+      // Create a copy of the hustle in the user's account
       await createHustle({
         title: hustle.title,
         description: hustle.description,
@@ -81,11 +88,19 @@ const ExplorePage = () => {
         earning_potential: hustle.earning_potential,
         image: hustle.image,
         tools: hustle.tools,
+        category: hustle.category,
+        notes: `Saved from explore page on ${new Date().toLocaleDateString()}`
       });
 
-      setSavedHustles(prev => [...prev, hustle.id]);
-      localStorage.setItem('savedHustles', JSON.stringify([...savedHustles, hustle.id]));
-      toast.success('Hustle saved successfully');
+      // Update local state for immediate UI feedback
+      const newSavedIds = new Set(savedHustleIds);
+      newSavedIds.add(hustle.id);
+      setSavedHustleIds(newSavedIds);
+      
+      // Save to localStorage for persistence
+      localStorage.setItem(`savedHustles_${currentUser.id}`, JSON.stringify([...newSavedIds]));
+      
+      toast.success('Hustle saved to your dashboard!');
     } catch (error) {
       console.error('Error saving hustle:', error);
       toast.error('Failed to save hustle');
@@ -340,7 +355,7 @@ const ExplorePage = () => {
                     }}
                     className="absolute top-3 right-3 w-8 h-8 rounded-full bg-dark-900/70 backdrop-blur-sm flex items-center justify-center text-white hover:bg-dark-800 transition-colors"
                   >
-                    {savedHustles.includes(hustle.id) ? (
+                    {savedHustleIds.has(hustle.id) ? (
                       <BookmarkCheck size={16} className="text-hustle-300" />
                     ) : (
                       <Bookmark size={16} />
@@ -420,7 +435,7 @@ const ExplorePage = () => {
           setSelectedHustle(null);
         }}
         onSave={(id) => selectedHustle && handleSaveHustle(selectedHustle)}
-        isSaved={selectedHustle ? savedHustles.includes(selectedHustle.id) : false}
+        isSaved={selectedHustle ? savedHustleIds.has(selectedHustle.id) : false}
       />
     </div>
   );

@@ -40,7 +40,9 @@ export function useExploreHustles(filters: FilterOptions = {}): UseExploreHustle
 
       let query = supabase
         .from('hustles')
-        .select('*', { count: 'exact' });
+        .select('*', { count: 'exact' })
+        // Only show hustles that are not from the current user (for explore page)
+        .neq('user_id', (await supabase.auth.getUser()).data.user?.id || '');
 
       // Apply filters
       if (filters.search) {

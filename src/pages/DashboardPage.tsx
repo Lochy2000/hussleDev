@@ -5,14 +5,22 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useRealtimeHustles } from '../hooks/useRealtimeHustles';
 import { useSupabase } from '../hooks/useSupabase';
+import CreateHustleModal from '../components/ui/CreateHustleModal';
+import HustleModal from '../components/ui/HustleModal';
+import { Database } from '../lib/database.types';
 import toast from 'react-hot-toast';
+
+type Hustle = Database['public']['Tables']['hustles']['Row'];
 
 const DashboardPage = () => {
   const { currentUser } = useAuth();
-  const { hustles = [], loading } = useRealtimeHustles(currentUser?.id || '');
+  const { hustles = [], loading, error } = useRealtimeHustles(currentUser?.id || '');
   const { updateHustle, deleteHustle } = useSupabase();
   const [editingNotes, setEditingNotes] = useState<string | null>(null);
   const [noteText, setNoteText] = useState('');
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [selectedHustle, setSelectedHustle] = useState<Hustle | null>(null);
+  const [isHustleModalOpen, setIsHustleModalOpen] = useState(false);
 
   const moveHustle = async (hustleId: string, newStatus: 'saved' | 'in-progress' | 'launched') => {
     try {
@@ -23,6 +31,8 @@ const DashboardPage = () => {
   };
 
   const removeHustle = async (hustleId: string) => {
+    if (!confirm('Are you sure you want to delete this hustle?')) return;
+    
     try {
       await deleteHustle(hustleId);
     } catch (error) {
@@ -44,10 +54,34 @@ const DashboardPage = () => {
     }
   };
 
+  const handleHustleClick = (hustle: Hustle) => {
+    setSelectedHustle(hustle);
+    setIsHustleModalOpen(true);
+  };
+
+  const handleCreateSuccess = () => {
+    // The real-time subscription will automatically update the hustles list
+    toast.success('Hustle created and added to your dashboard!');
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="w-10 h-10 border-4 border-hustle-400 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto pb-12">
+        <div className="text-center py-12">
+          <h3 className="text-xl font-mono font-medium mb-2">Failed to load hustles</h3>
+          <p className="text-dark-300 mb-6">Please try refreshing the page</p>
+          <button onClick={() => window.location.reload()} className="btn btn-secondary">
+            Refresh
+          </button>
+        </div>
       </div>
     );
   }
@@ -59,8 +93,19 @@ const DashboardPage = () => {
   return (
     <div className="container mx-auto pb-12">
       <div className="mb-8">
-        <h1 className="text-3xl font-mono font-bold mb-2">Your Hustle Room</h1>
-        <p className="text-dark-300">Manage and track your side hustle projects</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-mono font-bold mb-2">Your Hustle Room</h1>
+            <p className="text-dark-300">Manage and track your side hustle projects</p>
+          </div>
+          <button
+            onClick={() => setIsCreateModalOpen(true)}
+            className="btn btn-primary neon-glow neon-purple flex items-center"
+          >
+            <Plus size={16} className="mr-2" />
+            Create Hustle
+          </button>
+        </div>
       </div>
 
       {(!Array.isArray(hustles) || hustles.length === 0) ? (
@@ -68,13 +113,21 @@ const DashboardPage = () => {
           <div className="bg-dark-700 inline-flex rounded-full p-4 mb-4">
             <Compass size={32} className="text-hustle-400" />
           </div>
-          <h3 className="text-xl font-mono font-medium mb-3">No saved hustles yet</h3>
+          <h3 className="text-xl font-mono font-medium mb-3">No hustles yet</h3>
           <p className="text-dark-300 mb-6 max-w-md mx-auto">
-            Explore our curated list of developer side hustle ideas and save the ones you're interested in.
+            Create your own hustle ideas or explore our curated list to get started.
           </p>
-          <Link to="/explore" className="btn btn-primary neon-glow neon-purple">
-            Explore Side Hustles
-          </Link>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="btn btn-primary neon-glow neon-purple"
+            >
+              Create Your First Hustle
+            </button>
+            <Link to="/explore" className="btn btn-secondary">
+              Explore Side Hustles
+            </Link>
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -98,7 +151,8 @@ const DashboardPage = () => {
                     key={hustle.id}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-dark-700 rounded-lg overflow-hidden"
+                    className="bg-dark-700 rounded-lg overflow-hidden cursor-pointer"
+                    onClick={() => handleHustleClick(hustle)}
                   >
                     <div className="h-24 overflow-hidden">
                       <img
@@ -127,7 +181,7 @@ const DashboardPage = () => {
                       </div>
                       
                       {editingNotes === hustle.id ? (
-                        <div className="mb-2">
+                        <div className="mb-2" onClick={(e) => e.stopPropagation()}>
                           <textarea
                             value={noteText}
                             onChange={(e) => setNoteText(e.target.value)}
@@ -161,13 +215,19 @@ const DashboardPage = () => {
                       <div className="flex justify-between items-center border-t border-dark-600 pt-2 mt-2">
                         <div className="flex space-x-2">
                           <button
-                            onClick={() => moveHustle(hustle.id, 'in-progress')}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              moveHustle(hustle.id, 'in-progress');
+                            }}
                             className="text-xs bg-dark-600 hover:bg-dark-500 text-dark-200 px-2 py-1 rounded"
                           >
                             Start
                           </button>
                           <button
-                            onClick={() => startEditingNotes(hustle.id, hustle.notes)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              startEditingNotes(hustle.id, hustle.notes || '');
+                            }}
                             className="text-xs bg-dark-600 hover:bg-dark-500 text-dark-200 px-2 py-1 rounded flex items-center"
                           >
                             <PenSquare size={10} className="mr-1" />
@@ -175,7 +235,10 @@ const DashboardPage = () => {
                           </button>
                         </div>
                         <button
-                          onClick={() => removeHustle(hustle.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeHustle(hustle.id);
+                          }}
                           className="text-dark-400 hover:text-red-400"
                         >
                           <Trash2 size={14} />
@@ -186,13 +249,13 @@ const DashboardPage = () => {
                 ))
               )}
               
-              <Link
-                to="/explore"
-                className="flex items-center justify-center p-2 border border-dashed border-dark-600 rounded-lg text-dark-400 hover:text-hustle-300 hover:border-hustle-600"
+              <button
+                onClick={() => setIsCreateModalOpen(true)}
+                className="w-full flex items-center justify-center p-2 border border-dashed border-dark-600 rounded-lg text-dark-400 hover:text-hustle-300 hover:border-hustle-600 transition-colors"
               >
                 <Plus size={16} className="mr-1" />
-                <span className="text-sm">Add Hustle</span>
-              </Link>
+                <span className="text-sm">Create Hustle</span>
+              </button>
             </div>
           </div>
           
@@ -216,7 +279,8 @@ const DashboardPage = () => {
                     key={hustle.id}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-dark-700 rounded-lg overflow-hidden"
+                    className="bg-dark-700 rounded-lg overflow-hidden cursor-pointer"
+                    onClick={() => handleHustleClick(hustle)}
                   >
                     <div className="h-24 overflow-hidden">
                       <img
@@ -245,7 +309,7 @@ const DashboardPage = () => {
                       </div>
                       
                       {editingNotes === hustle.id ? (
-                        <div className="mb-2">
+                        <div className="mb-2" onClick={(e) => e.stopPropagation()}>
                           <textarea
                             value={noteText}
                             onChange={(e) => setNoteText(e.target.value)}
@@ -279,13 +343,19 @@ const DashboardPage = () => {
                       <div className="flex justify-between items-center border-t border-dark-600 pt-2 mt-2">
                         <div className="flex space-x-2">
                           <button
-                            onClick={() => moveHustle(hustle.id, 'launched')}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              moveHustle(hustle.id, 'launched');
+                            }}
                             className="text-xs bg-hustle-600 hover:bg-hustle-500 text-white px-2 py-1 rounded"
                           >
                             Launch
                           </button>
                           <button
-                            onClick={() => startEditingNotes(hustle.id, hustle.notes)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              startEditingNotes(hustle.id, hustle.notes || '');
+                            }}
                             className="text-xs bg-dark-600 hover:bg-dark-500 text-dark-200 px-2 py-1 rounded flex items-center"
                           >
                             <PenSquare size={10} className="mr-1" />
@@ -293,7 +363,10 @@ const DashboardPage = () => {
                           </button>
                         </div>
                         <button
-                          onClick={() => removeHustle(hustle.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeHustle(hustle.id);
+                          }}
                           className="text-dark-400 hover:text-red-400"
                         >
                           <Trash2 size={14} />
@@ -326,7 +399,8 @@ const DashboardPage = () => {
                     key={hustle.id}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-dark-700 rounded-lg overflow-hidden"
+                    className="bg-dark-700 rounded-lg overflow-hidden cursor-pointer"
+                    onClick={() => handleHustleClick(hustle)}
                   >
                     <div className="h-24 overflow-hidden">
                       <img
@@ -355,7 +429,7 @@ const DashboardPage = () => {
                       </div>
                       
                       {editingNotes === hustle.id ? (
-                        <div className="mb-2">
+                        <div className="mb-2" onClick={(e) => e.stopPropagation()}>
                           <textarea
                             value={noteText}
                             onChange={(e) => setNoteText(e.target.value)}
@@ -388,14 +462,20 @@ const DashboardPage = () => {
                       
                       <div className="flex justify-between items-center border-t border-dark-600 pt-2 mt-2">
                         <button
-                          onClick={() => startEditingNotes(hustle.id, hustle.notes)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            startEditingNotes(hustle.id, hustle.notes || '');
+                          }}
                           className="text-xs bg-dark-600 hover:bg-dark-500 text-dark-200 px-2 py-1 rounded flex items-center"
                         >
                           <PenSquare size={10} className="mr-1" />
                           Notes
                         </button>
                         <button
-                          onClick={() => removeHustle(hustle.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeHustle(hustle.id);
+                          }}
                           className="text-dark-400 hover:text-red-400"
                         >
                           <Trash2 size={14} />
@@ -409,6 +489,22 @@ const DashboardPage = () => {
           </div>
         </div>
       )}
+
+      {/* Modals */}
+      <CreateHustleModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSuccess={handleCreateSuccess}
+      />
+
+      <HustleModal
+        hustle={selectedHustle}
+        isOpen={isHustleModalOpen}
+        onClose={() => {
+          setIsHustleModalOpen(false);
+          setSelectedHustle(null);
+        }}
+      />
     </div>
   );
 };
