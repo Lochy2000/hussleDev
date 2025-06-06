@@ -38,7 +38,7 @@ export function useExploreHustles(filters: FilterOptions = {}): UseExploreHustle
       setLoading(true);
       setError(null);
 
-      // Get current user to exclude their hustles from explore
+      // Get current user to exclude their personal hustles from explore
       const { data: userData } = await supabase.auth.getUser();
       const currentUserId = userData.user?.id;
 
@@ -46,9 +46,12 @@ export function useExploreHustles(filters: FilterOptions = {}): UseExploreHustle
         .from('hustles')
         .select('*', { count: 'exact' });
 
-      // Exclude current user's hustles from explore page
+      // Show sample hustles (system user) and exclude current user's personal hustles
       if (currentUserId) {
-        query = query.neq('user_id', currentUserId);
+        // Show hustles that are either:
+        // 1. Sample hustles (system user: 00000000-0000-0000-0000-000000000000)
+        // 2. Other users' hustles (but not current user's)
+        query = query.or(`user_id.eq.00000000-0000-0000-0000-000000000000,and(user_id.neq.${currentUserId})`);
       }
 
       // Apply filters

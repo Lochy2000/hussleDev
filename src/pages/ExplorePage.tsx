@@ -40,7 +40,7 @@ const ExplorePage = () => {
   const [selectedHustle, setSelectedHustle] = useState<Hustle | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const { hustles, loading, error, hasMore, loadMore } = useExploreHustles({
+  const { hustles, loading, error, hasMore, loadMore, refetch } = useExploreHustles({
     search: searchTerm,
     tags: selectedTags,
     timeCommitment: timeFilter || undefined,
@@ -140,7 +140,7 @@ const ExplorePage = () => {
           <p className="text-dark-300 mb-6">
             {error.message || 'An error occurred while loading the hustles. Please try again.'}
           </p>
-          <button onClick={() => window.location.reload()} className="btn btn-secondary">
+          <button onClick={() => refetch()} className="btn btn-secondary">
             Try Again
           </button>
         </div>
