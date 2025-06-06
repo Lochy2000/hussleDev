@@ -175,34 +175,6 @@ const ExplorePage = () => {
         <p className="text-dark-300">Discover developer side hustle ideas and start building today</p>
       </div>
 
-      {/* Debug Info - Remove this in production */}
-      <div className="mb-4 p-4 bg-dark-800 rounded-lg border border-dark-700 text-xs">
-        <h4 className="font-mono font-bold mb-2">🐛 Debug Info:</h4>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <p><strong>Hustles:</strong> {hustles.length}</p>
-            <p><strong>Loading:</strong> {loading ? 'Yes' : 'No'}</p>
-            <p><strong>Error:</strong> {error ? error.message : 'None'}</p>
-            <p><strong>Has More:</strong> {hasMore ? 'Yes' : 'No'}</p>
-          </div>
-          <div>
-            <p><strong>Search:</strong> "{searchTerm}"</p>
-            <p><strong>Tags:</strong> [{selectedTags.join(', ')}]</p>
-            <p><strong>Category:</strong> "{category}"</p>
-            <p><strong>Sort:</strong> {sortBy} {sortOrder}</p>
-          </div>
-        </div>
-        <button 
-          onClick={() => {
-            console.log('🔄 Manual refetch triggered');
-            refetch();
-          }}
-          className="mt-2 px-3 py-1 bg-hustle-600 text-white rounded text-xs"
-        >
-          Manual Refetch
-        </button>
-      </div>
-
       {/* Categories */}
       <div className="mb-8 overflow-x-auto">
         <div className="flex space-x-2 pb-2">
