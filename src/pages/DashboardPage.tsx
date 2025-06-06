@@ -14,7 +14,7 @@ type Hustle = Database['public']['Tables']['hustles']['Row'];
 
 const DashboardPage = () => {
   const { currentUser } = useAuth();
-  const { hustles = [], loading, error } = useRealtimeHustles(currentUser?.id || '');
+  const { hustles = [], loading, error, refetch } = useRealtimeHustles(currentUser?.id || '');
   const { updateHustle, deleteHustle } = useSupabase();
   const [editingNotes, setEditingNotes] = useState<string | null>(null);
   const [noteText, setNoteText] = useState('');
@@ -25,6 +25,7 @@ const DashboardPage = () => {
   const moveHustle = async (hustleId: string, newStatus: 'saved' | 'in-progress' | 'launched') => {
     try {
       await updateHustle(hustleId, { status: newStatus });
+      // Real-time subscription will handle the UI update
     } catch (error) {
       toast.error('Failed to update hustle status');
     }
@@ -35,6 +36,7 @@ const DashboardPage = () => {
     
     try {
       await deleteHustle(hustleId);
+      // Real-time subscription will handle the UI update
     } catch (error) {
       toast.error('Failed to delete hustle');
     }
@@ -49,6 +51,7 @@ const DashboardPage = () => {
     try {
       await updateHustle(hustleId, { notes: noteText });
       setEditingNotes(null);
+      // Real-time subscription will handle the UI update
     } catch (error) {
       toast.error('Failed to save notes');
     }
@@ -61,12 +64,13 @@ const DashboardPage = () => {
 
   const handleCreateSuccess = () => {
     // The real-time subscription will automatically update the hustles list
+    setIsCreateModalOpen(false);
     toast.success('Hustle created and added to your dashboard!');
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
         <div className="w-10 h-10 border-4 border-hustle-400 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
@@ -78,7 +82,7 @@ const DashboardPage = () => {
         <div className="text-center py-12">
           <h3 className="text-xl font-mono font-medium mb-2">Failed to load hustles</h3>
           <p className="text-dark-300 mb-6">Please try refreshing the page</p>
-          <button onClick={() => window.location.reload()} className="btn btn-secondary">
+          <button onClick={() => refetch()} className="btn btn-secondary">
             Refresh
           </button>
         </div>

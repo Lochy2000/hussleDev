@@ -58,7 +58,14 @@ export function useRealtimeHustles(userId: string) {
             
             switch (payload.eventType) {
               case 'INSERT':
-                setHustles((current) => [payload.new as Hustle, ...current]);
+                setHustles((current) => {
+                  const newHustle = payload.new as Hustle;
+                  // Check if hustle already exists to prevent duplicates
+                  if (current.find(h => h.id === newHustle.id)) {
+                    return current;
+                  }
+                  return [newHustle, ...current];
+                });
                 break;
               case 'UPDATE':
                 setHustles((current) =>
@@ -77,6 +84,9 @@ export function useRealtimeHustles(userId: string) {
         )
         .subscribe((status) => {
           console.log('Subscription status:', status);
+          if (status === 'SUBSCRIBED') {
+            console.log('Successfully subscribed to real-time updates');
+          }
         });
     };
 

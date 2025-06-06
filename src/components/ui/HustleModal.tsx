@@ -32,15 +32,15 @@ const HustleModal: React.FC<HustleModalProps> = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-dark-900/80 backdrop-blur-sm z-50"
+            className="fixed inset-0 bg-dark-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
           />
 
-          {/* Modal */}
+          {/* Modal - Centered */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="fixed inset-4 md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-3xl bg-dark-800 rounded-lg shadow-xl z-50 overflow-hidden max-h-[90vh] overflow-y-auto"
+            className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-3xl bg-dark-800 rounded-lg shadow-xl z-50 overflow-hidden max-h-[90vh] overflow-y-auto border border-dark-700"
           >
             {/* Close button */}
             <button

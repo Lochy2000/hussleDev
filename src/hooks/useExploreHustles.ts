@@ -110,6 +110,7 @@ export function useExploreHustles(filters: FilterOptions = {}): UseExploreHustle
 
   useEffect(() => {
     setPage(1);
+    setHustles([]); // Clear existing hustles when filters change
     fetchHustles();
   }, [
     filters.search,
