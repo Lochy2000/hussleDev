@@ -50,6 +50,24 @@ const ExplorePage = () => {
     sortOrder,
   });
 
+  // Debug logging
+  useEffect(() => {
+    console.log('🎯 ExplorePage state update:');
+    console.log('  - Hustles count:', hustles.length);
+    console.log('  - Loading:', loading);
+    console.log('  - Error:', error);
+    console.log('  - Has more:', hasMore);
+    console.log('  - Current filters:', {
+      search: searchTerm,
+      tags: selectedTags,
+      timeCommitment: timeFilter,
+      earningPotential: earningFilter,
+      category,
+      sortBy,
+      sortOrder
+    });
+  }, [hustles, loading, error, hasMore, searchTerm, selectedTags, timeFilter, earningFilter, category, sortBy, sortOrder]);
+
   const { ref } = useInfiniteScroll({
     onLoadMore: loadMore,
     hasMore,
@@ -121,12 +139,14 @@ const ExplorePage = () => {
   };
 
   const resetFilters = () => {
+    console.log('🔄 Resetting all filters');
     setSelectedTags([]);
     setTimeFilter('');
     setEarningFilter('');
     setCategory('');
     setSortBy('created_at');
     setSortOrder('desc');
+    setSearchTerm('');
   };
 
   if (error) {
@@ -153,6 +173,34 @@ const ExplorePage = () => {
       <div className="mb-8">
         <h1 className="text-3xl font-mono font-bold mb-2">Explore Side Hustles</h1>
         <p className="text-dark-300">Discover developer side hustle ideas and start building today</p>
+      </div>
+
+      {/* Debug Info - Remove this in production */}
+      <div className="mb-4 p-4 bg-dark-800 rounded-lg border border-dark-700 text-xs">
+        <h4 className="font-mono font-bold mb-2">🐛 Debug Info:</h4>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <p><strong>Hustles:</strong> {hustles.length}</p>
+            <p><strong>Loading:</strong> {loading ? 'Yes' : 'No'}</p>
+            <p><strong>Error:</strong> {error ? error.message : 'None'}</p>
+            <p><strong>Has More:</strong> {hasMore ? 'Yes' : 'No'}</p>
+          </div>
+          <div>
+            <p><strong>Search:</strong> "{searchTerm}"</p>
+            <p><strong>Tags:</strong> [{selectedTags.join(', ')}]</p>
+            <p><strong>Category:</strong> "{category}"</p>
+            <p><strong>Sort:</strong> {sortBy} {sortOrder}</p>
+          </div>
+        </div>
+        <button 
+          onClick={() => {
+            console.log('🔄 Manual refetch triggered');
+            refetch();
+          }}
+          className="mt-2 px-3 py-1 bg-hustle-600 text-white rounded text-xs"
+        >
+          Manual Refetch
+        </button>
       </div>
 
       {/* Categories */}
@@ -228,7 +276,7 @@ const ExplorePage = () => {
             <option value="earning_potential-asc">Lowest Earning</option>
           </select>
 
-          {(selectedTags.length > 0 || timeFilter || earningFilter || category || sortBy !== 'created_at' || sortOrder !== 'desc') && (
+          {(selectedTags.length > 0 || timeFilter || earningFilter || category || sortBy !== 'created_at' || sortOrder !== 'desc' || searchTerm) && (
             <button
               onClick={resetFilters}
               className="btn btn-outline flex items-center"
