@@ -47,6 +47,11 @@ export function useExploreHustles(filters: FilterOptions = {}): UseExploreHustle
 
       console.log('🔧 Building query...');
 
+      // Only show system hustles (sample data) and exclude user-created hustles
+      // System hustles have user_id = '00000000-0000-0000-0000-000000000000'
+      // OR hustles that don't have "Created by user" in their notes
+      query = query.or(`user_id.eq.00000000-0000-0000-0000-000000000000,and(notes.not.ilike.*Created by user*,notes.not.ilike.*Saved from explore page*)`);
+
       // Apply filters
       if (filters.search) {
         console.log('🔍 Adding search filter:', filters.search);

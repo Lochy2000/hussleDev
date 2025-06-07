@@ -50,7 +50,7 @@ const CreateHustleModal: React.FC<CreateHustleModalProps> = ({
         image: formData.image || 'https://images.pexels.com/photos/11035471/pexels-photo-11035471.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
         tools: toolsArray,
         category: formData.category || null,
-        notes: formData.notes || null
+        notes: formData.notes ? `${formData.notes}\n\nCreated by user on ${new Date().toLocaleDateString()}` : `Created by user on ${new Date().toLocaleDateString()}`
       });
 
       toast.success('Hustle created successfully!');

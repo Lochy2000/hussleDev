@@ -133,12 +133,25 @@ const DashboardPage = () => {
   }
 
   // Separate hustles by type and status
-  const ownHustles = Array.isArray(hustles) ? hustles.filter(h => !h.notes?.includes('Saved from explore page')) : [];
-  const savedIdeas = Array.isArray(hustles) ? hustles.filter(h => h.notes?.includes('Saved from explore page')) : [];
+  const ownHustles = Array.isArray(hustles) ? hustles.filter(h => 
+    !h.notes?.includes('Saved from explore page') && 
+    !h.notes?.includes('Created by user')
+  ) : [];
+  
+  const userCreatedHustles = Array.isArray(hustles) ? hustles.filter(h => 
+    h.notes?.includes('Created by user')
+  ) : [];
+  
+  const savedIdeas = Array.isArray(hustles) ? hustles.filter(h => 
+    h.notes?.includes('Saved from explore page')
+  ) : [];
 
-  const savedHustles = ownHustles.filter(h => h.status === 'saved');
-  const inProgressHustles = ownHustles.filter(h => h.status === 'in-progress');
-  const launchedHustles = ownHustles.filter(h => h.status === 'launched');
+  // Combine user created hustles with own hustles for the kanban board
+  const allUserHustles = [...ownHustles, ...userCreatedHustles];
+  
+  const savedHustles = allUserHustles.filter(h => h.status === 'saved');
+  const inProgressHustles = allUserHustles.filter(h => h.status === 'in-progress');
+  const launchedHustles = allUserHustles.filter(h => h.status === 'launched');
 
   return (
     <div className="container mx-auto pb-12">
@@ -336,7 +349,7 @@ const DashboardPage = () => {
                               </div>
                             </div>
                           ) : (
-                            hustle.notes && !hustle.notes.includes('Saved from explore page') && (
+                            hustle.notes && !hustle.notes.includes('Saved from explore page') && !hustle.notes.includes('Created by user') && (
                               <div className="mb-2 text-xs text-dark-300 bg-dark-800 p-2 rounded">
                                 {hustle.notes}
                               </div>
@@ -464,7 +477,7 @@ const DashboardPage = () => {
                               </div>
                             </div>
                           ) : (
-                            hustle.notes && !hustle.notes.includes('Saved from explore page') && (
+                            hustle.notes && !hustle.notes.includes('Saved from explore page') && !hustle.notes.includes('Created by user') && (
                               <div className="mb-2 text-xs text-dark-300 bg-dark-800 p-2 rounded">
                                 {hustle.notes}
                               </div>
@@ -584,7 +597,7 @@ const DashboardPage = () => {
                               </div>
                             </div>
                           ) : (
-                            hustle.notes && !hustle.notes.includes('Saved from explore page') && (
+                            hustle.notes && !hustle.notes.includes('Saved from explore page') && !hustle.notes.includes('Created by user') && (
                               <div className="mb-2 text-xs text-dark-300 bg-dark-800 p-2 rounded">
                                 {hustle.notes}
                               </div>
