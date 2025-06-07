@@ -60,7 +60,7 @@ const HustleModal: React.FC<HustleModalProps> = ({
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-dark-800 to-transparent" />
                 
-                {/* Save button */}
+                {/* Save button - Only show if onSave is provided (for explore page) */}
                 {onSave && (
                   <button
                     onClick={() => onSave(hustle.id)}
