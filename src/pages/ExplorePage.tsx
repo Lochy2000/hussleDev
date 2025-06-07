@@ -95,7 +95,7 @@ const ExplorePage = () => {
     }
 
     try {
-      // Create a copy of the hustle in the user's account
+      // Create a copy of the hustle in the user's account as a "saved idea"
       await createHustle({
         title: hustle.title,
         description: hustle.description,
@@ -167,7 +167,7 @@ const ExplorePage = () => {
     <div className="container mx-auto pb-12">
       <div className="mb-8">
         <h1 className="text-3xl font-mono font-bold mb-2">Explore Side Hustles</h1>
-        <p className="text-dark-300">Discover developer side hustle ideas and start building today</p>
+        <p className="text-dark-300">Discover developer side hustle ideas and save them for inspiration</p>
       </div>
 
       {/* Categories */}

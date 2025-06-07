@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Compass, Trash2, PenSquare, Clock, DollarSign, Code, Plus } from 'lucide-react';
+import { Compass, Trash2, PenSquare, Clock, DollarSign, Code, Plus, Bookmark } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useRealtimeHustles } from '../hooks/useRealtimeHustles';
@@ -22,6 +22,31 @@ const DashboardPage = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedHustle, setSelectedHustle] = useState<Hustle | null>(null);
   const [isHustleModalOpen, setIsHustleModalOpen] = useState(false);
+  const [lastActionTime, setLastActionTime] = useState<number>(0);
+
+  // Auto-refresh fallback mechanism
+  useEffect(() => {
+    let refreshTimer: NodeJS.Timeout;
+    
+    // If an action was performed recently, set up auto-refresh
+    if (lastActionTime > 0) {
+      refreshTimer = setTimeout(() => {
+        console.log('Auto-refreshing dashboard...');
+        refetch();
+        setLastActionTime(0);
+      }, 2000); // Refresh after 2 seconds
+    }
+
+    return () => {
+      if (refreshTimer) {
+        clearTimeout(refreshTimer);
+      }
+    };
+  }, [lastActionTime, refetch]);
+
+  const triggerRefresh = () => {
+    setLastActionTime(Date.now());
+  };
 
   const moveHustle = async (hustleId: string, newStatus: 'saved' | 'in-progress' | 'launched') => {
     try {
@@ -36,7 +61,8 @@ const DashboardPage = () => {
         toast.success('Hustle moved to Saved');
       }
       
-      // Real-time subscription will handle the UI update automatically
+      // Trigger refresh fallback
+      triggerRefresh();
     } catch (error) {
       toast.error('Failed to update hustle status');
     }
@@ -48,7 +74,8 @@ const DashboardPage = () => {
     try {
       await deleteHustle(hustleId);
       toast.success('Hustle deleted successfully');
-      // Real-time subscription will handle the UI update automatically
+      // Trigger refresh fallback
+      triggerRefresh();
     } catch (error) {
       toast.error('Failed to delete hustle');
     }
@@ -64,7 +91,8 @@ const DashboardPage = () => {
       await updateHustle(hustleId, { notes: noteText });
       setEditingNotes(null);
       toast.success('Notes saved');
-      // Real-time subscription will handle the UI update automatically
+      // Trigger refresh fallback
+      triggerRefresh();
     } catch (error) {
       toast.error('Failed to save notes');
     }
@@ -76,9 +104,10 @@ const DashboardPage = () => {
   };
 
   const handleCreateSuccess = () => {
-    // The real-time subscription will automatically update the hustles list
     setIsCreateModalOpen(false);
     toast.success('Hustle created and added to your dashboard!');
+    // Trigger refresh fallback
+    triggerRefresh();
   };
 
   if (loading) {
@@ -103,9 +132,13 @@ const DashboardPage = () => {
     );
   }
 
-  const savedHustles = Array.isArray(hustles) ? hustles.filter(h => h.status === 'saved') : [];
-  const inProgressHustles = Array.isArray(hustles) ? hustles.filter(h => h.status === 'in-progress') : [];
-  const launchedHustles = Array.isArray(hustles) ? hustles.filter(h => h.status === 'launched') : [];
+  // Separate hustles by type and status
+  const ownHustles = Array.isArray(hustles) ? hustles.filter(h => !h.notes?.includes('Saved from explore page')) : [];
+  const savedIdeas = Array.isArray(hustles) ? hustles.filter(h => h.notes?.includes('Saved from explore page')) : [];
+
+  const savedHustles = ownHustles.filter(h => h.status === 'saved');
+  const inProgressHustles = ownHustles.filter(h => h.status === 'in-progress');
+  const launchedHustles = ownHustles.filter(h => h.status === 'launched');
 
   return (
     <div className="container mx-auto pb-12">
@@ -156,37 +189,27 @@ const DashboardPage = () => {
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Saved Column */}
-          <div className="bg-dark-800 rounded-lg border border-dark-700 p-4 h-full">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="font-mono font-bold text-lg">Saved</h2>
-              <span className="bg-dark-700 text-dark-300 text-xs rounded-full px-2 py-0.5">
-                {savedHustles.length}
-              </span>
-            </div>
-
-            <div className="space-y-4">
-              {savedHustles.length === 0 ? (
-                <div className="text-center p-4 border border-dashed border-dark-600 rounded-lg">
-                  <p className="text-dark-400 text-sm">No saved hustles</p>
-                  <Link 
-                    to="/explore" 
-                    className="text-hustle-300 hover:text-hustle-200 text-xs mt-1 inline-block"
-                  >
-                    Explore ideas →
-                  </Link>
-                </div>
-              ) : (
-                savedHustles.map(hustle => (
+        <div className="space-y-8">
+          {/* Saved Ideas Section (Read-only) */}
+          {savedIdeas.length > 0 && (
+            <div>
+              <h2 className="text-xl font-mono font-bold mb-4 flex items-center">
+                <Bookmark size={20} className="mr-2 text-hustle-400" />
+                Saved Ideas
+                <span className="ml-2 bg-dark-700 text-dark-300 text-xs rounded-full px-2 py-0.5">
+                  {savedIdeas.length}
+                </span>
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {savedIdeas.map(hustle => (
                   <motion.div
                     key={hustle.id}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-dark-700 rounded-lg overflow-hidden cursor-pointer"
+                    className="bg-dark-800 rounded-lg overflow-hidden cursor-pointer border border-hustle-700/30"
                     onClick={() => handleHustleClick(hustle)}
                   >
-                    <div className="h-24 overflow-hidden">
+                    <div className="h-20 overflow-hidden">
                       <img
                         src={hustle.image}
                         alt={hustle.title}
@@ -195,77 +218,23 @@ const DashboardPage = () => {
                     </div>
                     <div className="p-3">
                       <h3 className="font-medium text-sm mb-1">{hustle.title}</h3>
-                      
                       <div className="flex flex-wrap gap-1 mb-2">
                         {hustle.tags.slice(0, 2).map(tag => (
                           <span
                             key={tag}
-                            className="px-1.5 py-0.5 bg-dark-600 text-dark-300 rounded-full text-xs"
+                            className="px-1.5 py-0.5 bg-hustle-700/50 text-hustle-300 rounded-full text-xs"
                           >
                             {tag}
                           </span>
                         ))}
                         {hustle.tags.length > 2 && (
-                          <span className="px-1.5 py-0.5 bg-dark-600 text-dark-300 rounded-full text-xs">
+                          <span className="px-1.5 py-0.5 bg-hustle-700/50 text-hustle-300 rounded-full text-xs">
                             +{hustle.tags.length - 2}
                           </span>
                         )}
                       </div>
-                      
-                      {editingNotes === hustle.id ? (
-                        <div className="mb-2" onClick={(e) => e.stopPropagation()}>
-                          <textarea
-                            value={noteText}
-                            onChange={(e) => setNoteText(e.target.value)}
-                            className="w-full p-2 bg-dark-800 border border-dark-600 rounded-md text-white text-xs focus:outline-none focus:ring-1 focus:ring-hustle-500"
-                            placeholder="Add notes..."
-                            rows={3}
-                          />
-                          <div className="flex justify-end space-x-2 mt-1">
-                            <button
-                              onClick={() => setEditingNotes(null)}
-                              className="text-xs text-dark-300 hover:text-white px-2 py-1"
-                            >
-                              Cancel
-                            </button>
-                            <button
-                              onClick={() => saveNotes(hustle.id)}
-                              className="text-xs bg-hustle-600 text-white px-2 py-1 rounded"
-                            >
-                              Save
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        hustle.notes && (
-                          <div className="mb-2 text-xs text-dark-300 bg-dark-800 p-2 rounded">
-                            {hustle.notes}
-                          </div>
-                        )
-                      )}
-                      
                       <div className="flex justify-between items-center border-t border-dark-600 pt-2 mt-2">
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              moveHustle(hustle.id, 'in-progress');
-                            }}
-                            className="text-xs bg-hustle-600 hover:bg-hustle-500 text-white px-2 py-1 rounded transition-colors"
-                          >
-                            Start
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              startEditingNotes(hustle.id, hustle.notes || '');
-                            }}
-                            className="text-xs bg-dark-600 hover:bg-dark-500 text-dark-200 px-2 py-1 rounded flex items-center transition-colors"
-                          >
-                            <PenSquare size={10} className="mr-1" />
-                            Notes
-                          </button>
-                        </div>
+                        <span className="text-xs text-dark-400">Inspiration Only</span>
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -273,250 +242,382 @@ const DashboardPage = () => {
                           }}
                           className="text-dark-400 hover:text-red-400 transition-colors"
                         >
-                          <Trash2 size={14} />
+                          <Trash2 size={12} />
                         </button>
                       </div>
                     </div>
                   </motion.div>
-                ))
-              )}
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Your Hustles Section */}
+          <div>
+            <h2 className="text-xl font-mono font-bold mb-4">Your Hustles</h2>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Saved Column */}
+              <div className="bg-dark-800 rounded-lg border border-dark-700 p-4 h-full">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="font-mono font-bold text-lg">Saved</h2>
+                  <span className="bg-dark-700 text-dark-300 text-xs rounded-full px-2 py-0.5">
+                    {savedHustles.length}
+                  </span>
+                </div>
+
+                <div className="space-y-4">
+                  {savedHustles.length === 0 ? (
+                    <div className="text-center p-4 border border-dashed border-dark-600 rounded-lg">
+                      <p className="text-dark-400 text-sm">No saved hustles</p>
+                      <button
+                        onClick={() => setIsCreateModalOpen(true)}
+                        className="text-hustle-300 hover:text-hustle-200 text-xs mt-1 inline-block"
+                      >
+                        Create one →
+                      </button>
+                    </div>
+                  ) : (
+                    savedHustles.map(hustle => (
+                      <motion.div
+                        key={hustle.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="bg-dark-700 rounded-lg overflow-hidden cursor-pointer"
+                        onClick={() => handleHustleClick(hustle)}
+                      >
+                        <div className="h-24 overflow-hidden">
+                          <img
+                            src={hustle.image}
+                            alt={hustle.title}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="p-3">
+                          <h3 className="font-medium text-sm mb-1">{hustle.title}</h3>
+                          
+                          <div className="flex flex-wrap gap-1 mb-2">
+                            {hustle.tags.slice(0, 2).map(tag => (
+                              <span
+                                key={tag}
+                                className="px-1.5 py-0.5 bg-dark-600 text-dark-300 rounded-full text-xs"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                            {hustle.tags.length > 2 && (
+                              <span className="px-1.5 py-0.5 bg-dark-600 text-dark-300 rounded-full text-xs">
+                                +{hustle.tags.length - 2}
+                              </span>
+                            )}
+                          </div>
+                          
+                          {editingNotes === hustle.id ? (
+                            <div className="mb-2" onClick={(e) => e.stopPropagation()}>
+                              <textarea
+                                value={noteText}
+                                onChange={(e) => setNoteText(e.target.value)}
+                                className="w-full p-2 bg-dark-800 border border-dark-600 rounded-md text-white text-xs focus:outline-none focus:ring-1 focus:ring-hustle-500"
+                                placeholder="Add notes..."
+                                rows={3}
+                              />
+                              <div className="flex justify-end space-x-2 mt-1">
+                                <button
+                                  onClick={() => setEditingNotes(null)}
+                                  className="text-xs text-dark-300 hover:text-white px-2 py-1"
+                                >
+                                  Cancel
+                                </button>
+                                <button
+                                  onClick={() => saveNotes(hustle.id)}
+                                  className="text-xs bg-hustle-600 text-white px-2 py-1 rounded"
+                                >
+                                  Save
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            hustle.notes && !hustle.notes.includes('Saved from explore page') && (
+                              <div className="mb-2 text-xs text-dark-300 bg-dark-800 p-2 rounded">
+                                {hustle.notes}
+                              </div>
+                            )
+                          )}
+                          
+                          <div className="flex justify-between items-center border-t border-dark-600 pt-2 mt-2">
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  moveHustle(hustle.id, 'in-progress');
+                                }}
+                                className="text-xs bg-hustle-600 hover:bg-hustle-500 text-white px-2 py-1 rounded transition-colors"
+                              >
+                                Start
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  startEditingNotes(hustle.id, hustle.notes || '');
+                                }}
+                                className="text-xs bg-dark-600 hover:bg-dark-500 text-dark-200 px-2 py-1 rounded flex items-center transition-colors"
+                              >
+                                <PenSquare size={10} className="mr-1" />
+                                Notes
+                              </button>
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                removeHustle(hustle.id);
+                              }}
+                              className="text-dark-400 hover:text-red-400 transition-colors"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))
+                  )}
+                  
+                  <button
+                    onClick={() => setIsCreateModalOpen(true)}
+                    className="w-full flex items-center justify-center p-2 border border-dashed border-dark-600 rounded-lg text-dark-400 hover:text-hustle-300 hover:border-hustle-600 transition-colors"
+                  >
+                    <Plus size={16} className="mr-1" />
+                    <span className="text-sm">Create Hustle</span>
+                  </button>
+                </div>
+              </div>
               
-              <button
-                onClick={() => setIsCreateModalOpen(true)}
-                className="w-full flex items-center justify-center p-2 border border-dashed border-dark-600 rounded-lg text-dark-400 hover:text-hustle-300 hover:border-hustle-600 transition-colors"
-              >
-                <Plus size={16} className="mr-1" />
-                <span className="text-sm">Create Hustle</span>
-              </button>
-            </div>
-          </div>
-          
-          {/* In Progress Column */}
-          <div className="bg-dark-800 rounded-lg border border-dark-700 p-4 h-full">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="font-mono font-bold text-lg">In Progress</h2>
-              <span className="bg-dark-700 text-dark-300 text-xs rounded-full px-2 py-0.5">
-                {inProgressHustles.length}
-              </span>
-            </div>
-
-            <div className="space-y-4">
-              {inProgressHustles.length === 0 ? (
-                <div className="text-center p-4 border border-dashed border-dark-600 rounded-lg">
-                  <p className="text-dark-400 text-sm">Move hustles here when you start working on them</p>
+              {/* In Progress Column */}
+              <div className="bg-dark-800 rounded-lg border border-dark-700 p-4 h-full">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="font-mono font-bold text-lg">In Progress</h2>
+                  <span className="bg-dark-700 text-dark-300 text-xs rounded-full px-2 py-0.5">
+                    {inProgressHustles.length}
+                  </span>
                 </div>
-              ) : (
-                inProgressHustles.map(hustle => (
-                  <motion.div
-                    key={hustle.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-dark-700 rounded-lg overflow-hidden cursor-pointer"
-                    onClick={() => handleHustleClick(hustle)}
-                  >
-                    <div className="h-24 overflow-hidden">
-                      <img
-                        src={hustle.image}
-                        alt={hustle.title}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <div className="p-3">
-                      <h3 className="font-medium text-sm mb-1">{hustle.title}</h3>
-                      
-                      <div className="flex flex-wrap gap-1 mb-2">
-                        {hustle.tags.slice(0, 2).map(tag => (
-                          <span
-                            key={tag}
-                            className="px-1.5 py-0.5 bg-dark-600 text-dark-300 rounded-full text-xs"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                        {hustle.tags.length > 2 && (
-                          <span className="px-1.5 py-0.5 bg-dark-600 text-dark-300 rounded-full text-xs">
-                            +{hustle.tags.length - 2}
-                          </span>
-                        )}
-                      </div>
-                      
-                      {editingNotes === hustle.id ? (
-                        <div className="mb-2" onClick={(e) => e.stopPropagation()}>
-                          <textarea
-                            value={noteText}
-                            onChange={(e) => setNoteText(e.target.value)}
-                            className="w-full p-2 bg-dark-800 border border-dark-600 rounded-md text-white text-xs focus:outline-none focus:ring-1 focus:ring-hustle-500"
-                            placeholder="Add notes..."
-                            rows={3}
-                          />
-                          <div className="flex justify-end space-x-2 mt-1">
-                            <button
-                              onClick={() => setEditingNotes(null)}
-                              className="text-xs text-dark-300 hover:text-white px-2 py-1"
-                            >
-                              Cancel
-                            </button>
-                            <button
-                              onClick={() => saveNotes(hustle.id)}
-                              className="text-xs bg-hustle-600 text-white px-2 py-1 rounded"
-                            >
-                              Save
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        hustle.notes && (
-                          <div className="mb-2 text-xs text-dark-300 bg-dark-800 p-2 rounded">
-                            {hustle.notes}
-                          </div>
-                        )
-                      )}
-                      
-                      <div className="flex justify-between items-center border-t border-dark-600 pt-2 mt-2">
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              moveHustle(hustle.id, 'launched');
-                            }}
-                            className="text-xs bg-green-600 hover:bg-green-500 text-white px-2 py-1 rounded transition-colors"
-                          >
-                            Launch 🚀
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              startEditingNotes(hustle.id, hustle.notes || '');
-                            }}
-                            className="text-xs bg-dark-600 hover:bg-dark-500 text-dark-200 px-2 py-1 rounded flex items-center transition-colors"
-                          >
-                            <PenSquare size={10} className="mr-1" />
-                            Notes
-                          </button>
-                        </div>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            removeHustle(hustle.id);
-                          }}
-                          className="text-dark-400 hover:text-red-400 transition-colors"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))
-              )}
-            </div>
-          </div>
-          
-          {/* Launched Column */}
-          <div className="bg-dark-800 rounded-lg border border-dark-700 p-4 h-full">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="font-mono font-bold text-lg">Launched 🚀</h2>
-              <span className="bg-dark-700 text-dark-300 text-xs rounded-full px-2 py-0.5">
-                {launchedHustles.length}
-              </span>
-            </div>
 
-            <div className="space-y-4">
-              {launchedHustles.length === 0 ? (
-                <div className="text-center p-4 border border-dashed border-dark-600 rounded-lg">
-                  <p className="text-dark-400 text-sm">Move hustles here when you've launched them</p>
-                </div>
-              ) : (
-                launchedHustles.map(hustle => (
-                  <motion.div
-                    key={hustle.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-dark-700 rounded-lg overflow-hidden cursor-pointer border border-green-800/30"
-                    onClick={() => handleHustleClick(hustle)}
-                  >
-                    <div className="h-24 overflow-hidden">
-                      <img
-                        src={hustle.image}
-                        alt={hustle.title}
-                        className="w-full h-full object-cover"
-                      />
+                <div className="space-y-4">
+                  {inProgressHustles.length === 0 ? (
+                    <div className="text-center p-4 border border-dashed border-dark-600 rounded-lg">
+                      <p className="text-dark-400 text-sm">Move hustles here when you start working on them</p>
                     </div>
-                    <div className="p-3">
-                      <h3 className="font-medium text-sm mb-1">{hustle.title}</h3>
-                      
-                      <div className="flex flex-wrap gap-1 mb-2">
-                        {hustle.tags.slice(0, 2).map(tag => (
-                          <span
-                            key={tag}
-                            className="px-1.5 py-0.5 bg-dark-600 text-dark-300 rounded-full text-xs"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                        {hustle.tags.length > 2 && (
-                          <span className="px-1.5 py-0.5 bg-dark-600 text-dark-300 rounded-full text-xs">
-                            +{hustle.tags.length - 2}
-                          </span>
-                        )}
-                      </div>
-                      
-                      {editingNotes === hustle.id ? (
-                        <div className="mb-2" onClick={(e) => e.stopPropagation()}>
-                          <textarea
-                            value={noteText}
-                            onChange={(e) => setNoteText(e.target.value)}
-                            className="w-full p-2 bg-dark-800 border border-dark-600 rounded-md text-white text-xs focus:outline-none focus:ring-1 focus:ring-hustle-500"
-                            placeholder="Add notes..."
-                            rows={3}
+                  ) : (
+                    inProgressHustles.map(hustle => (
+                      <motion.div
+                        key={hustle.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="bg-dark-700 rounded-lg overflow-hidden cursor-pointer"
+                        onClick={() => handleHustleClick(hustle)}
+                      >
+                        <div className="h-24 overflow-hidden">
+                          <img
+                            src={hustle.image}
+                            alt={hustle.title}
+                            className="w-full h-full object-cover"
                           />
-                          <div className="flex justify-end space-x-2 mt-1">
+                        </div>
+                        <div className="p-3">
+                          <h3 className="font-medium text-sm mb-1">{hustle.title}</h3>
+                          
+                          <div className="flex flex-wrap gap-1 mb-2">
+                            {hustle.tags.slice(0, 2).map(tag => (
+                              <span
+                                key={tag}
+                                className="px-1.5 py-0.5 bg-dark-600 text-dark-300 rounded-full text-xs"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                            {hustle.tags.length > 2 && (
+                              <span className="px-1.5 py-0.5 bg-dark-600 text-dark-300 rounded-full text-xs">
+                                +{hustle.tags.length - 2}
+                              </span>
+                            )}
+                          </div>
+                          
+                          {editingNotes === hustle.id ? (
+                            <div className="mb-2" onClick={(e) => e.stopPropagation()}>
+                              <textarea
+                                value={noteText}
+                                onChange={(e) => setNoteText(e.target.value)}
+                                className="w-full p-2 bg-dark-800 border border-dark-600 rounded-md text-white text-xs focus:outline-none focus:ring-1 focus:ring-hustle-500"
+                                placeholder="Add notes..."
+                                rows={3}
+                              />
+                              <div className="flex justify-end space-x-2 mt-1">
+                                <button
+                                  onClick={() => setEditingNotes(null)}
+                                  className="text-xs text-dark-300 hover:text-white px-2 py-1"
+                                >
+                                  Cancel
+                                </button>
+                                <button
+                                  onClick={() => saveNotes(hustle.id)}
+                                  className="text-xs bg-hustle-600 text-white px-2 py-1 rounded"
+                                >
+                                  Save
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            hustle.notes && !hustle.notes.includes('Saved from explore page') && (
+                              <div className="mb-2 text-xs text-dark-300 bg-dark-800 p-2 rounded">
+                                {hustle.notes}
+                              </div>
+                            )
+                          )}
+                          
+                          <div className="flex justify-between items-center border-t border-dark-600 pt-2 mt-2">
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  moveHustle(hustle.id, 'launched');
+                                }}
+                                className="text-xs bg-green-600 hover:bg-green-500 text-white px-2 py-1 rounded transition-colors"
+                              >
+                                Launch 🚀
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  startEditingNotes(hustle.id, hustle.notes || '');
+                                }}
+                                className="text-xs bg-dark-600 hover:bg-dark-500 text-dark-200 px-2 py-1 rounded flex items-center transition-colors"
+                              >
+                                <PenSquare size={10} className="mr-1" />
+                                Notes
+                              </button>
+                            </div>
                             <button
-                              onClick={() => setEditingNotes(null)}
-                              className="text-xs text-dark-300 hover:text-white px-2 py-1"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                removeHustle(hustle.id);
+                              }}
+                              className="text-dark-400 hover:text-red-400 transition-colors"
                             >
-                              Cancel
-                            </button>
-                            <button
-                              onClick={() => saveNotes(hustle.id)}
-                              className="text-xs bg-hustle-600 text-white px-2 py-1 rounded"
-                            >
-                              Save
+                              <Trash2 size={14} />
                             </button>
                           </div>
                         </div>
-                      ) : (
-                        hustle.notes && (
-                          <div className="mb-2 text-xs text-dark-300 bg-dark-800 p-2 rounded">
-                            {hustle.notes}
-                          </div>
-                        )
-                      )}
-                      
-                      <div className="flex justify-between items-center border-t border-dark-600 pt-2 mt-2">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            startEditingNotes(hustle.id, hustle.notes || '');
-                          }}
-                          className="text-xs bg-dark-600 hover:bg-dark-500 text-dark-200 px-2 py-1 rounded flex items-center transition-colors"
-                        >
-                          <PenSquare size={10} className="mr-1" />
-                          Notes
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            removeHustle(hustle.id);
-                          }}
-                          className="text-dark-400 hover:text-red-400 transition-colors"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
+                      </motion.div>
+                    ))
+                  )}
+                </div>
+              </div>
+              
+              {/* Launched Column */}
+              <div className="bg-dark-800 rounded-lg border border-dark-700 p-4 h-full">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="font-mono font-bold text-lg">Launched 🚀</h2>
+                  <span className="bg-dark-700 text-dark-300 text-xs rounded-full px-2 py-0.5">
+                    {launchedHustles.length}
+                  </span>
+                </div>
+
+                <div className="space-y-4">
+                  {launchedHustles.length === 0 ? (
+                    <div className="text-center p-4 border border-dashed border-dark-600 rounded-lg">
+                      <p className="text-dark-400 text-sm">Move hustles here when you've launched them</p>
                     </div>
-                  </motion.div>
-                ))
-              )}
+                  ) : (
+                    launchedHustles.map(hustle => (
+                      <motion.div
+                        key={hustle.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="bg-dark-700 rounded-lg overflow-hidden cursor-pointer border border-green-800/30"
+                        onClick={() => handleHustleClick(hustle)}
+                      >
+                        <div className="h-24 overflow-hidden">
+                          <img
+                            src={hustle.image}
+                            alt={hustle.title}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="p-3">
+                          <h3 className="font-medium text-sm mb-1">{hustle.title}</h3>
+                          
+                          <div className="flex flex-wrap gap-1 mb-2">
+                            {hustle.tags.slice(0, 2).map(tag => (
+                              <span
+                                key={tag}
+                                className="px-1.5 py-0.5 bg-dark-600 text-dark-300 rounded-full text-xs"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                            {hustle.tags.length > 2 && (
+                              <span className="px-1.5 py-0.5 bg-dark-600 text-dark-300 rounded-full text-xs">
+                                +{hustle.tags.length - 2}
+                              </span>
+                            )}
+                          </div>
+                          
+                          {editingNotes === hustle.id ? (
+                            <div className="mb-2" onClick={(e) => e.stopPropagation()}>
+                              <textarea
+                                value={noteText}
+                                onChange={(e) => setNoteText(e.target.value)}
+                                className="w-full p-2 bg-dark-800 border border-dark-600 rounded-md text-white text-xs focus:outline-none focus:ring-1 focus:ring-hustle-500"
+                                placeholder="Add notes..."
+                                rows={3}
+                              />
+                              <div className="flex justify-end space-x-2 mt-1">
+                                <button
+                                  onClick={() => setEditingNotes(null)}
+                                  className="text-xs text-dark-300 hover:text-white px-2 py-1"
+                                >
+                                  Cancel
+                                </button>
+                                <button
+                                  onClick={() => saveNotes(hustle.id)}
+                                  className="text-xs bg-hustle-600 text-white px-2 py-1 rounded"
+                                >
+                                  Save
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            hustle.notes && !hustle.notes.includes('Saved from explore page') && (
+                              <div className="mb-2 text-xs text-dark-300 bg-dark-800 p-2 rounded">
+                                {hustle.notes}
+                              </div>
+                            )
+                          )}
+                          
+                          <div className="flex justify-between items-center border-t border-dark-600 pt-2 mt-2">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                startEditingNotes(hustle.id, hustle.notes || '');
+                              }}
+                              className="text-xs bg-dark-600 hover:bg-dark-500 text-dark-200 px-2 py-1 rounded flex items-center transition-colors"
+                            >
+                              <PenSquare size={10} className="mr-1" />
+                              Notes
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                removeHustle(hustle.id);
+                              }}
+                              className="text-dark-400 hover:text-red-400 transition-colors"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
