@@ -110,6 +110,11 @@ const DashboardPage = () => {
     triggerRefresh();
   };
 
+  const handleProgressUpdate = () => {
+    // Trigger refresh when tasks are updated
+    triggerRefresh();
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
@@ -308,6 +313,22 @@ const DashboardPage = () => {
                         <div className="p-3">
                           <h3 className="font-medium text-sm mb-1">{hustle.title}</h3>
                           
+                          {/* Progress bar if available */}
+                          {hustle.progress !== null && hustle.progress > 0 && (
+                            <div className="mb-2">
+                              <div className="flex justify-between text-xs mb-1">
+                                <span className="text-dark-400">Progress</span>
+                                <span className="text-white">{hustle.progress}%</span>
+                              </div>
+                              <div className="w-full bg-dark-600 rounded-full h-1">
+                                <div 
+                                  className="bg-hustle-500 h-1 rounded-full transition-all duration-300"
+                                  style={{ width: `${hustle.progress}%` }}
+                                />
+                              </div>
+                            </div>
+                          )}
+                          
                           <div className="flex flex-wrap gap-1 mb-2">
                             {hustle.tags.slice(0, 2).map(tag => (
                               <span
@@ -436,6 +457,22 @@ const DashboardPage = () => {
                         <div className="p-3">
                           <h3 className="font-medium text-sm mb-1">{hustle.title}</h3>
                           
+                          {/* Progress bar if available */}
+                          {hustle.progress !== null && hustle.progress > 0 && (
+                            <div className="mb-2">
+                              <div className="flex justify-between text-xs mb-1">
+                                <span className="text-dark-400">Progress</span>
+                                <span className="text-white">{hustle.progress}%</span>
+                              </div>
+                              <div className="w-full bg-dark-600 rounded-full h-1">
+                                <div 
+                                  className="bg-hustle-500 h-1 rounded-full transition-all duration-300"
+                                  style={{ width: `${hustle.progress}%` }}
+                                />
+                              </div>
+                            </div>
+                          )}
+                          
                           <div className="flex flex-wrap gap-1 mb-2">
                             {hustle.tags.slice(0, 2).map(tag => (
                               <span
@@ -556,6 +593,22 @@ const DashboardPage = () => {
                         <div className="p-3">
                           <h3 className="font-medium text-sm mb-1">{hustle.title}</h3>
                           
+                          {/* Progress bar (should be 100% for launched) */}
+                          {hustle.progress !== null && (
+                            <div className="mb-2">
+                              <div className="flex justify-between text-xs mb-1">
+                                <span className="text-dark-400">Progress</span>
+                                <span className="text-white">{hustle.progress}%</span>
+                              </div>
+                              <div className="w-full bg-dark-600 rounded-full h-1">
+                                <div 
+                                  className="bg-green-500 h-1 rounded-full transition-all duration-300"
+                                  style={{ width: `${hustle.progress}%` }}
+                                />
+                              </div>
+                            </div>
+                          )}
+                          
                           <div className="flex flex-wrap gap-1 mb-2">
                             {hustle.tags.slice(0, 2).map(tag => (
                               <span
@@ -650,6 +703,7 @@ const DashboardPage = () => {
           setIsHustleModalOpen(false);
           setSelectedHustle(null);
         }}
+        showTasks={selectedHustle && !selectedHustle.notes?.includes('Saved from explore page')}
       />
     </div>
   );

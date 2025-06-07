@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Clock, DollarSign, Code, Link, Github, Globe, Calendar } from 'lucide-react';
+import { Clock, DollarSign, Code, Link, Github, Globe, Calendar, CheckCircle, Target } from 'lucide-react';
 import { Database } from '../../lib/database.types';
+import TaskManager from './TaskManager';
 
 type Hustle = Database['public']['Tables']['hustles']['Row'];
 
@@ -12,6 +13,7 @@ interface HustleDetailsProps {
   onPriorityChange?: (priority: 'low' | 'medium' | 'high') => void;
   onMilestoneAdd?: (milestone: string) => void;
   onMilestoneComplete?: (index: number) => void;
+  onProgressUpdate?: () => void;
 }
 
 const HustleDetails: React.FC<HustleDetailsProps> = ({
@@ -21,7 +23,10 @@ const HustleDetails: React.FC<HustleDetailsProps> = ({
   onPriorityChange,
   onMilestoneAdd,
   onMilestoneComplete,
+  onProgressUpdate,
 }) => {
+  const [activeTab, setActiveTab] = useState<'overview' | 'tasks'>('overview');
+
   return (
     <div className="bg-dark-800 rounded-lg border border-dark-700 overflow-hidden">
       <div className="relative h-48">
@@ -51,6 +56,23 @@ const HustleDetails: React.FC<HustleDetailsProps> = ({
         <h3 className="text-xl font-mono font-medium mb-2">{hustle.title}</h3>
         <p className="text-dark-300 mb-4">{hustle.description}</p>
 
+        {/* Progress Bar */}
+        {hustle.progress !== null && (
+          <div className="mb-6">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-sm font-medium text-dark-300">Progress</span>
+              <span className="text-sm text-white">{hustle.progress}%</span>
+            </div>
+            <div className="w-full bg-dark-600 rounded-full h-2">
+              <motion.div 
+                className="bg-hustle-500 h-2 rounded-full transition-all duration-300"
+                initial={{ width: 0 }}
+                animate={{ width: `${hustle.progress}%` }}
+              />
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-2 gap-4 mb-6">
           <div className="flex items-center text-dark-300">
             <Clock size={16} className="mr-2" />
@@ -78,108 +100,132 @@ const HustleDetails: React.FC<HustleDetailsProps> = ({
           </div>
         </div>
 
+        {/* Tab Navigation */}
         {showActions && (
           <>
-            <div className="mb-6">
-              <h4 className="text-sm font-medium text-dark-300 uppercase tracking-wider mb-2">
-                Status
-              </h4>
-              <div className="flex space-x-2">
-                {(['saved', 'in-progress', 'launched'] as const).map((status) => (
-                  <button
-                    key={status}
-                    onClick={() => onStatusChange?.(status)}
-                    className={`px-4 py-2 rounded-md text-sm font-medium ${
-                      hustle.status === status
-                        ? 'bg-hustle-500 text-white'
-                        : 'bg-dark-700 text-dark-300 hover:bg-dark-600'
-                    }`}
-                  >
-                    {status === 'saved' ? 'Backlog' : status === 'in-progress' ? 'In Progress' : 'Launched'}
-                  </button>
-                ))}
-              </div>
+            <div className="flex border-b border-dark-700 mb-6">
+              <button
+                onClick={() => setActiveTab('overview')}
+                className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                  activeTab === 'overview'
+                    ? 'border-hustle-500 text-white'
+                    : 'border-transparent text-dark-300 hover:text-white'
+                }`}
+              >
+                Overview
+              </button>
+              <button
+                onClick={() => setActiveTab('tasks')}
+                className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                  activeTab === 'tasks'
+                    ? 'border-hustle-500 text-white'
+                    : 'border-transparent text-dark-300 hover:text-white'
+                }`}
+              >
+                Tasks & Progress
+              </button>
             </div>
 
-            <div className="mb-6">
-              <h4 className="text-sm font-medium text-dark-300 uppercase tracking-wider mb-2">
-                Milestones
-              </h4>
-              <div className="space-y-2">
-                {hustle.milestones && Array.isArray(JSON.parse(hustle.milestones as string)) && 
-                  JSON.parse(hustle.milestones as string).map((milestone: any, index: number) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between p-3 bg-dark-700 rounded-md"
-                    >
-                      <span className={milestone.completed ? 'text-dark-400 line-through' : 'text-white'}>
-                        {milestone.text}
-                      </span>
-                      {!milestone.completed && (
-                        <button
-                          onClick={() => onMilestoneComplete?.(index)}
-                          className="text-hustle-300 hover:text-hustle-200"
-                        >
-                          Complete
-                        </button>
+            {/* Tab Content */}
+            {activeTab === 'overview' ? (
+              <div className="space-y-6">
+                {/* Status */}
+                <div>
+                  <h4 className="text-sm font-medium text-dark-300 uppercase tracking-wider mb-2">
+                    Status
+                  </h4>
+                  <div className="flex space-x-2">
+                    {(['saved', 'in-progress', 'launched'] as const).map((status) => (
+                      <button
+                        key={status}
+                        onClick={() => onStatusChange?.(status)}
+                        className={`px-4 py-2 rounded-md text-sm font-medium ${
+                          hustle.status === status
+                            ? 'bg-hustle-500 text-white'
+                            : 'bg-dark-700 text-dark-300 hover:bg-dark-600'
+                        }`}
+                      >
+                        {status === 'saved' ? 'Backlog' : status === 'in-progress' ? 'In Progress' : 'Launched'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Revenue Tracking */}
+                {(hustle.current_revenue !== null || hustle.revenue_target !== null) && (
+                  <div>
+                    <h4 className="text-sm font-medium text-dark-300 uppercase tracking-wider mb-2">
+                      Revenue
+                    </h4>
+                    <div className="bg-dark-700 rounded-lg p-4 space-y-3">
+                      {(hustle.current_revenue !== null || hustle.revenue_target !== null) && (
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          {hustle.current_revenue !== null && (
+                            <div>
+                              <p className="text-dark-400">Current Revenue</p>
+                              <p className="text-lg font-medium text-green-400">${hustle.current_revenue}</p>
+                            </div>
+                          )}
+                          {hustle.revenue_target !== null && (
+                            <div>
+                              <p className="text-dark-400">Revenue Target</p>
+                              <p className="text-lg font-medium text-white">${hustle.revenue_target}</p>
+                            </div>
+                          )}
+                        </div>
                       )}
                     </div>
-                  ))
-                }
-                <button
-                  onClick={() => {
-                    const milestone = window.prompt('Enter new milestone:');
-                    if (milestone) onMilestoneAdd?.(milestone);
-                  }}
-                  className="w-full p-2 border-2 border-dashed border-dark-600 rounded-md text-dark-400 hover:text-white hover:border-dark-500 transition-colors"
-                >
-                  + Add Milestone
-                </button>
-              </div>
-            </div>
+                  </div>
+                )}
 
-            {(hustle.github_url || hustle.website_url) && (
-              <div className="mb-6">
-                <h4 className="text-sm font-medium text-dark-300 uppercase tracking-wider mb-2">
-                  Links
-                </h4>
-                <div className="flex space-x-4">
-                  {hustle.github_url && (
-                    <a
-                      href={hustle.github_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center text-dark-300 hover:text-white"
-                    >
-                      <Github size={16} className="mr-1" />
-                      Repository
-                    </a>
-                  )}
-                  {hustle.website_url && (
-                    <a
-                      href={hustle.website_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center text-dark-300 hover:text-white"
-                    >
-                      <Globe size={16} className="mr-1" />
-                      Website
-                    </a>
-                  )}
-                </div>
-              </div>
-            )}
+                {/* Links */}
+                {(hustle.github_url || hustle.website_url) && (
+                  <div>
+                    <h4 className="text-sm font-medium text-dark-300 uppercase tracking-wider mb-2">
+                      Links
+                    </h4>
+                    <div className="flex space-x-4">
+                      {hustle.github_url && (
+                        <a
+                          href={hustle.github_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center text-dark-300 hover:text-white"
+                        >
+                          <Github size={16} className="mr-1" />
+                          Repository
+                        </a>
+                      )}
+                      {hustle.website_url && (
+                        <a
+                          href={hustle.website_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center text-dark-300 hover:text-white"
+                        >
+                          <Globe size={16} className="mr-1" />
+                          Website
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )}
 
-            {hustle.due_date && (
-              <div className="mb-6">
-                <h4 className="text-sm font-medium text-dark-300 uppercase tracking-wider mb-2">
-                  Due Date
-                </h4>
-                <div className="flex items-center text-dark-300">
-                  <Calendar size={16} className="mr-2" />
-                  {new Date(hustle.due_date).toLocaleDateString()}
-                </div>
+                {/* Due Date */}
+                {hustle.due_date && (
+                  <div>
+                    <h4 className="text-sm font-medium text-dark-300 uppercase tracking-wider mb-2">
+                      Due Date
+                    </h4>
+                    <div className="flex items-center text-dark-300">
+                      <Calendar size={16} className="mr-2" />
+                      {new Date(hustle.due_date).toLocaleDateString()}
+                    </div>
+                  </div>
+                )}
               </div>
+            ) : (
+              <TaskManager hustle={hustle} onProgressUpdate={onProgressUpdate} />
             )}
           </>
         )}

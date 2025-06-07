@@ -9,6 +9,59 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      hustle_tasks: {
+        Row: {
+          id: string
+          hustle_id: string
+          title: string
+          description: string | null
+          category: 'development' | 'design' | 'marketing' | 'research' | 'testing' | 'planning' | 'deployment'
+          status: 'todo' | 'in-progress' | 'completed'
+          priority: 'low' | 'medium' | 'high'
+          estimated_hours: number
+          actual_hours: number
+          due_date: string | null
+          depends_on: string[]
+          ai_generated: boolean
+          order_index: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          hustle_id: string
+          title: string
+          description?: string | null
+          category?: 'development' | 'design' | 'marketing' | 'research' | 'testing' | 'planning' | 'deployment'
+          status?: 'todo' | 'in-progress' | 'completed'
+          priority?: 'low' | 'medium' | 'high'
+          estimated_hours?: number
+          actual_hours?: number
+          due_date?: string | null
+          depends_on?: string[]
+          ai_generated?: boolean
+          order_index?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          hustle_id?: string
+          title?: string
+          description?: string | null
+          category?: 'development' | 'design' | 'marketing' | 'research' | 'testing' | 'planning' | 'deployment'
+          status?: 'todo' | 'in-progress' | 'completed'
+          priority?: 'low' | 'medium' | 'high'
+          estimated_hours?: number
+          actual_hours?: number
+          due_date?: string | null
+          depends_on?: string[]
+          ai_generated?: boolean
+          order_index?: number
+          created_at?: string
+          updated_at?: string
+        }
+      }
       templates: {
         Row: {
           id: string
