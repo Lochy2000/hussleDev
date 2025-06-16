@@ -1,6 +1,7 @@
 # Hustle.dev - Developer Side Hustle Platform
-
+![hustleDev](https://github.com/user-attachments/assets/452f0217-5a96-42a7-a786-41af133cd466)
 A modern web application for discovering, tracking, and implementing developer side hustle ideas. Built with React, TypeScript, and Tailwind CSS.
+
 
 ## Current Features
 
